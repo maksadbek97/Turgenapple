@@ -2,155 +2,253 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06281f">
 <title>Белый касса</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
-/* VOICE: дружеская игра, весело и чётко
-   IDEA: кассовый чек — белая лента с зубчатым краем
-   PICTURE: большое колесо с номерами очереди
-   COLOUR and TYPE: белая лента на насыщенном синем, 4 ярких сектора, Rubik
-   LAYOUT: одна колонка-чек по центру */
-:root{color-scheme:light dark;--bg:light-dark(#1f3df0,#0b1440);--paper:light-dark(#fff,#f4f4ef);--ink:#141414;--mute:#6b6b6b;--line:#dcdcdc;--red:#e8262b;
---c1:#ff4b3e;--c2:#ffb800;--c3:#18b26b;--c4:#1f6bff}
-:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
-*{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Rubik,system-ui,sans-serif;overflow-x:clip;min-height:100vh;padding:24px 14px 48px}
-.receipt{max-width:440px;margin:0 auto;background:var(--paper);position:relative;padding:28px 22px 30px;filter:drop-shadow(0 18px 30px rgba(0,0,0,.28))}
-.receipt::before,.receipt::after{content:"";position:absolute;left:0;right:0;height:12px;background:linear-gradient(-45deg,transparent 8px,var(--paper) 0) 0 0/16px 12px repeat-x,linear-gradient(45deg,transparent 8px,var(--paper) 0) 0 0/16px 12px repeat-x}
-.receipt::before{top:-11px;transform:rotate(180deg)}
-.receipt::after{bottom:-11px}
-h1{font-weight:800;font-size:40px;line-height:1.05;margin:0;text-align:center;letter-spacing:-.5px}
-.sub{text-align:center;color:var(--mute);margin:6px 0 0;font-size:14px}
-.dash{border:0;border-top:2px dashed var(--line);margin:20px 0}
-h2{font-size:22px;margin:0 0 14px;text-align:center}
-.names{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.nm{font:inherit;font-weight:700;font-size:17px;min-height:64px;border:2px solid var(--ink);background:#fff;color:var(--ink);border-radius:14px;cursor:pointer;padding:8px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:transform .12s}
-.nm:hover:not(:disabled){transform:translateY(-2px);background:#fff6d6}
-.nm:focus-visible,.btn:focus-visible,.link:focus-visible{outline:3px solid var(--c4);outline-offset:3px}
-.nm small{font-weight:500;font-size:13px;color:var(--mute)}
-.nm:disabled{cursor:not-allowed;border-color:var(--line);color:#a3a3a3;background:#f3f3f3}
-.nm.took{border-color:var(--c3);color:var(--ink);background:#eafaf2}
-.nm.took small{color:#0d7a48;font-weight:700}
-.wheelbox{position:relative;width:min(100%,340px);aspect-ratio:1;margin:6px auto 0}
-.wheelbox svg{position:absolute;inset:0;width:100%;height:100%}
-#wheel{transition:transform 4.6s cubic-bezier(.12,.8,.12,1);transform-origin:50% 50%}
-.pin{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:30px solid var(--ink);z-index:2;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
-.hello{text-align:center;font-size:18px;margin:0 0 12px}
-.hello b{font-weight:800}
-.btn{display:block;width:100%;font:inherit;font-weight:800;font-size:19px;min-height:56px;margin-top:18px;border:0;border-radius:14px;background:var(--red);color:#fff;cursor:pointer;box-shadow:0 4px 0 #a5161a}
-.btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #a5161a}
-.btn:disabled{background:#c9c9c9;box-shadow:0 4px 0 #a9a9a9;cursor:not-allowed}
-.btn.dark{background:var(--ink);box-shadow:0 4px 0 #000}
-.link{display:block;margin:14px auto 0;background:none;border:0;font:inherit;color:var(--mute);text-decoration:underline;cursor:pointer;min-height:44px}
-.result{text-align:center;margin-top:16px;min-height:72px}
-.result .big{font-size:64px;font-weight:800;line-height:1;color:var(--red)}
-.result p{margin:4px 0 0}
-.rows{list-style:none;padding:0;margin:0}
-.rows li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px dotted var(--line);font-size:17px}
-.rows .no{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;font-size:18px}
-.rows .who{flex:1;font-weight:700}
-.rows .st{color:var(--mute);font-size:14px;white-space:nowrap}
-.rows li.done .no{background:#bdbdbd}
-.rows li.wait .no{background:#fff;border:2px dashed var(--line);color:#bbb}
-.stamp{display:block;width:max-content;margin:18px auto 0;border:3px solid var(--red);color:var(--red);font-weight:800;padding:4px 14px;border-radius:8px;transform:rotate(-6deg);font-size:18px}
-.note{font-size:13px;color:var(--mute);text-align:center;margin:12px 0 0}
-.msg{background:#fff3cd;border-radius:10px;padding:10px 12px;font-size:14px;margin-top:12px;display:none}
+:root{
+  --bg1:#06281f;--bg2:#0b3d2f;--card:#ffffff;--ink:#0d1b16;--ink2:#4a5b54;--mute:#8a9a93;--line:#e6ece9;--soft:#f3f7f5;
+  --pri:#12b981;--pri2:#0a8f63;--pri-glow:rgba(18,185,129,.35);--red:#ef4444;--gold:#ffc53d;
+  --c1:#ff6b5b;--c1b:#e8453a;--c2:#ffc53d;--c2b:#f29d0b;--c3:#22c3a6;--c3b:#0f9b83;--c4:#4f8cff;--c4b:#2f62e0;
+  --r:22px;--sh:0 30px 60px -20px rgba(0,0,0,.45),0 10px 24px -12px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg1)}
+body{margin:0;min-height:100vh;color:var(--ink);font:16px/1.5 Manrope,system-ui,sans-serif;overflow-x:clip;
+  background:radial-gradient(900px 500px at 85% -10%,rgba(34,195,166,.35),transparent 60%),radial-gradient(700px 500px at -10% 30%,rgba(255,197,61,.14),transparent 60%),linear-gradient(180deg,var(--bg2),var(--bg1) 70%);
+  padding:max(20px,env(safe-area-inset-top)) 14px max(40px,env(safe-area-inset-bottom))}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.07;background-image:radial-gradient(#fff 1px,transparent 1px);background-size:22px 22px;mask-image:linear-gradient(#000,transparent 70%)}
+.wrap{max-width:460px;margin:0 auto;position:relative}
+
+/* header */
+.top{display:flex;align-items:center;gap:12px;color:#fff;padding:6px 4px 18px}
+.logo{flex:none;width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(145deg,#fff,#dff5ec);box-shadow:0 8px 20px -6px rgba(0,0,0,.4),inset 0 -2px 0 rgba(0,0,0,.06)}
+.top h1{font:800 26px/1.05 Unbounded,Manrope,sans-serif;margin:0;letter-spacing:-.3px}
+.top p{margin:3px 0 0;font-size:13px;color:rgba(255,255,255,.7);font-weight:600}
+.steps{display:flex;gap:6px;margin:0 4px 14px}
+.steps i{flex:1;height:5px;border-radius:5px;background:rgba(255,255,255,.16);transition:background .3s}
+.steps i.on{background:linear-gradient(90deg,var(--pri),#7ef0c8)}
+
+/* card */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:22px 18px;position:relative}
+.card+.card{margin-top:14px}
+.eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--pri2);background:#e6f8f1;padding:5px 10px;border-radius:99px}
+h2{font:700 22px/1.2 Unbounded,Manrope,sans-serif;margin:10px 0 4px;letter-spacing:-.2px}
+.lead{color:var(--ink2);margin:0 0 16px;font-size:15px}
+
+/* names */
+.names{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.nm{position:relative;font:inherit;text-align:left;display:flex;align-items:center;gap:10px;min-height:66px;padding:11px 14px 11px 11px;border-radius:16px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s}
+.nm:hover:not(:disabled){transform:translateY(-2px);border-color:#bfe9d8;box-shadow:0 10px 22px -12px rgba(10,143,99,.45)}
+.nm:active:not(:disabled){transform:translateY(0) scale(.98)}
+.av{flex:none;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font:700 17px Unbounded,sans-serif;color:#fff}
+.nm b{display:block;font-size:15.5px;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm small{display:block;font-size:12.5px;font-weight:600;color:var(--mute);line-height:1.3;margin-top:2px}
+.nm:disabled{cursor:default;background:var(--soft);border-color:transparent}
+.nm:disabled .av{background:#cfd8d4!important}
+.nm:disabled b{color:#7d8c86}
+.nm .ok{margin-left:auto;flex:none;width:20px;height:20px;border-radius:50%;background:var(--pri);display:grid;place-items:center}
+.nm.took{border-color:#bfe9d8;background:linear-gradient(180deg,#f2fcf8,#fff)}
+.nm.took small{color:var(--pri2)}
+.nm .chev{margin-left:auto;color:#b7c4bf;flex:none}
+
+/* inputs */
+.phone{display:flex;align-items:center;border:2px solid var(--line);border-radius:18px;background:var(--soft);padding:6px;transition:border-color .15s,box-shadow .15s}
+.phone:focus-within{border-color:var(--pri);box-shadow:0 0 0 5px var(--pri-glow);background:#fff}
+.phone .cc{flex:none;display:flex;align-items:center;gap:6px;font-weight:800;font-size:18px;padding:10px 12px;background:#fff;border-radius:13px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.field{flex:1;width:100%;border:0;background:transparent;font:700 22px Manrope,sans-serif;letter-spacing:.5px;color:var(--ink);padding:10px 12px;outline:0}
+.field::placeholder{color:#b5c2bd}
+.err{color:var(--red);font-size:14px;font-weight:600;min-height:20px;margin:10px 2px 0}
+.who-chip{display:flex;align-items:center;gap:10px;background:var(--soft);border-radius:16px;padding:10px 12px;margin-bottom:14px}
+.who-chip b{font-size:16px}
+
+/* buttons */
+.btn{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:58px;margin-top:16px;border:0;border-radius:18px;font:800 17px Manrope,sans-serif;color:#fff;cursor:pointer;
+  background:linear-gradient(180deg,#1fd295,var(--pri) 45%,var(--pri2));box-shadow:0 14px 26px -12px var(--pri-glow),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 0 rgba(0,0,0,.12);transition:transform .12s,filter .12s,opacity .2s}
+.btn:hover:not(:disabled){filter:brightness(1.05)}
+.btn:active:not(:disabled){transform:scale(.98)}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.btn.dark{background:linear-gradient(180deg,#22332d,#0d1b16);box-shadow:0 14px 26px -14px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.12)}
+.btn.wa{background:linear-gradient(180deg,#3ee07a,#25d366 45%,#16a34a);box-shadow:0 14px 26px -12px rgba(37,211,102,.5),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn.ghost{background:var(--soft);color:var(--ink);box-shadow:none}
+.btn.spin{min-height:64px;font-size:19px;letter-spacing:.3px}
+.link{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:46px;margin-top:8px;background:none;border:0;font:700 14.5px Manrope,sans-serif;color:var(--ink2);cursor:pointer;border-radius:12px}
+.link:hover{background:var(--soft)}
+.btn:focus-visible,.link:focus-visible,.nm:focus-visible,.cal button:focus-visible{outline:3px solid #7ef0c8;outline-offset:3px}
+
+/* wheel */
+.stage{position:relative;width:min(100%,330px);aspect-ratio:1;margin:8px auto 0}
+.stage::before{content:"";position:absolute;inset:-6%;border-radius:50%;background:radial-gradient(circle,var(--pri-glow),transparent 65%);filter:blur(6px)}
+.stage svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+#wheel{transition:transform 4.8s cubic-bezier(.12,.8,.12,1);transform-origin:100px 100px}
+.stage svg.pin{position:absolute;inset:auto;left:50%;top:-16px;width:38px;height:46px;transform:translateX(-50%);z-index:3;filter:drop-shadow(0 4px 6px rgba(0,0,0,.35))}
+.bulbs circle{animation:blink 1.2s infinite}
+.bulbs circle:nth-child(2n){animation-delay:.6s}
+@keyframes blink{50%{opacity:.35}}
+.result{text-align:center;margin-top:18px;min-height:10px}
+.res{display:flex;align-items:center;gap:14px;text-align:left;background:linear-gradient(135deg,#f2fcf8,#fff);border:1.5px solid #bfe9d8;border-radius:18px;padding:14px;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+.res .num{flex:none;width:64px;height:64px;border-radius:18px;display:grid;place-items:center;font:800 32px Unbounded,sans-serif;color:#fff}
+.res small{display:block;color:var(--mute);font-weight:700;font-size:12.5px}
+.res b{display:block;font-size:18px;line-height:1.25}
+@keyframes pop{from{transform:scale(.85);opacity:0}}
+
+/* calendar */
+.sec{border-top:1.5px dashed var(--line);margin-top:22px;padding-top:18px}
+.mhead{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px}
+.mhead b{font:700 18px Unbounded,sans-serif}
+.mhead span{font-size:12.5px;font-weight:700;color:var(--mute)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.cal .wd{font-size:11.5px;font-weight:800;color:var(--mute);text-align:center;padding:2px 0 4px}
+.cal .wd:nth-child(n+6){color:#e07a6f}
+.cal button{font:700 15px Manrope,sans-serif;aspect-ratio:1;min-height:40px;border:0;border-radius:12px;background:var(--soft);color:var(--ink);cursor:pointer;padding:0;transition:transform .1s,background .15s}
+.cal button:hover:not(:disabled){background:#e3f6ee}
+.cal button.we{color:#d2554a}
+.cal button:disabled{background:transparent;color:#cfd8d4;text-decoration:line-through;cursor:not-allowed}
+.cal button.sel{background:linear-gradient(180deg,#1fd295,var(--pri2));color:#fff;box-shadow:0 8px 16px -8px var(--pri-glow);transform:scale(1.06)}
+
+/* share card */
+.cardimg{display:block;width:100%;border-radius:18px;box-shadow:0 18px 36px -18px rgba(0,0,0,.45)}
+
+/* board */
+.board{list-style:none;margin:0;padding:0;position:relative}
+.board::before{content:"";position:absolute;left:21px;top:22px;bottom:22px;width:2px;background:repeating-linear-gradient(var(--line) 0 6px,transparent 6px 11px)}
+.board li{position:relative;display:flex;align-items:center;gap:12px;padding:8px 0}
+.board .no{position:relative;z-index:1;flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font:700 17px Unbounded,sans-serif;color:#fff;box-shadow:0 0 0 4px #fff}
+.board .who{flex:1;font-weight:800;font-size:15.5px;line-height:1.2}
+.board .who small{display:block;font-weight:600;font-size:12.5px;color:var(--mute)}
+.board .tag{flex:none;font-size:12.5px;font-weight:800;padding:6px 10px;border-radius:99px;background:var(--soft);color:var(--ink2);white-space:nowrap}
+.board .tag.ok{background:#e6f8f1;color:var(--pri2)}
+.board li.done .no{background:#cfd8d4}
+.board li.wait .no{background:#fff;color:#b9c6c1;border:2px dashed #d6dfdb;box-shadow:0 0 0 4px #fff}
+.board li.wait .who{color:#a7b5b0}
+.stamp{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px auto 0;width:max-content;padding:8px 16px;border-radius:99px;background:#e6f8f1;color:var(--pri2);font-weight:800}
+.msg{margin-top:12px;background:#fff7e0;color:#7a5a00;border-radius:14px;padding:12px 14px;font-size:14px;font-weight:600;display:none}
 .msg.on{display:block}
+.foot{text-align:center;margin-top:14px}
+.foot .link{color:rgba(255,255,255,.65);width:auto;margin:0 auto;padding:0 16px}
+.foot .link:hover{background:rgba(255,255,255,.08)}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(3,20,15,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:grid;place-items:center;padding:16px;z-index:10}
+.modal .box{background:#fff;border-radius:24px;padding:22px;width:min(100%,360px);box-shadow:var(--sh);animation:pop .3s ease-out}
+.modal .ico{width:52px;height:52px;border-radius:16px;background:#fdecea;display:grid;place-items:center;margin-bottom:6px}
+.pin4{width:100%;border:2px solid var(--line);border-radius:16px;background:var(--soft);font:800 28px Unbounded,sans-serif;letter-spacing:12px;text-align:center;padding:12px;outline:0;color:var(--ink)}
+.pin4:focus{border-color:var(--red);box-shadow:0 0 0 5px rgba(239,68,68,.2);background:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn.red{background:linear-gradient(180deg,#f87171,#ef4444 45%,#dc2626);box-shadow:0 14px 26px -12px rgba(239,68,68,.5),inset 0 1px 0 rgba(255,255,255,.3)}
 [hidden]{display:none!important}
-.field{display:block;width:100%;font:inherit;font-size:24px;font-weight:700;letter-spacing:1px;text-align:center;padding:14px;border:2px solid var(--ink);border-radius:14px;background:#fff;color:var(--ink)}
-.field:focus{outline:3px solid var(--c4);outline-offset:2px}
-.err{color:var(--red);text-align:center;font-size:15px;min-height:22px;margin:8px 0 0}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;padding:16px;z-index:10}
-.modal .box{background:#fff;color:var(--ink);border-radius:18px;padding:22px;width:min(100%,340px)}
-.modal h3{margin:0 0 12px;text-align:center;font-size:20px}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row2 .btn{margin-top:14px}
-.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:10px}
-.cal .wd{font-size:12px;color:var(--mute);text-align:center;padding-bottom:2px}
-.cal button{font:inherit;font-weight:700;font-size:16px;min-height:44px;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer;padding:0}
-.cal button:disabled{color:#c8c8c8;background:#f5f5f5;text-decoration:line-through;cursor:not-allowed}
-.cal button.sel{background:var(--ink);border-color:var(--ink);color:#fff}
-.cal button:focus-visible{outline:3px solid var(--c4);outline-offset:2px}
-.month{text-align:center;font-weight:800;font-size:22px;margin:4px 0 0}
-.card{display:block;width:100%;border-radius:14px;margin-top:6px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
-.btn.wa{background:#25d366;box-shadow:0 4px 0 #128c4a}
-.btn.wa:active{box-shadow:0 1px 0 #128c4a}
-.btn.ghost{background:#ececec;color:var(--ink);box-shadow:0 4px 0 #cfcfcf}
-@media (prefers-reduced-motion:reduce){#wheel{transition-duration:.01s}}
+@media(min-width:720px){.names{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){#wheel{transition-duration:.01s}.bulbs circle,.res,.modal .box{animation:none}}
 </style>
 </head>
 <body>
-<main class="receipt">
-  <h1>Белый касса</h1>
-  <p class="sub">Карусель очереди · <span id="date"></span></p>
-  <hr class="dash">
+<div class="wrap">
+  <header class="top">
+    <div class="logo" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="10" width="22" height="14" rx="3" fill="#0a8f63"/><rect x="7" y="4" width="14" height="8" rx="2" fill="#12b981"/><rect x="9" y="6" width="10" height="2" rx="1" fill="#fff"/><circle cx="9" cy="16" r="1.6" fill="#fff"/><circle cx="14" cy="16" r="1.6" fill="#fff"/><circle cx="19" cy="16" r="1.6" fill="#fff"/><rect x="7" y="19.5" width="14" height="2" rx="1" fill="#7ef0c8"/></svg></div>
+    <div><h1>Белый касса</h1><p>Карусель очереди · <span id="date"></span></p></div>
+  </header>
+  <div class="steps" id="steps" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 
-  <section id="vPick">
-    <h2>Выбери своё имя</h2>
-    <div class="names" id="names"></div>
-    <p class="note">Каждый крутит один раз. Выпавшее число — твоя очередь и месяц: 3 — декабрь, 4 — январь, 5 — февраль, 6 — март.</p>
-  </section>
+  <main>
+    <section class="card" id="vPick">
+      <span class="eyebrow">Шаг 1 из 4</span>
+      <h2>Выбери своё имя</h2>
+      <p class="lead">Каждый крутит один раз. Число — очередь и месяц: 3 декабрь · 4 январь · 5 февраль · 6 март.</p>
+      <div class="names" id="names"></div>
+    </section>
 
-  <section id="vAuth" hidden>
-    <h2>Вход: <span id="authName"></span></h2>
-    <p class="note" style="margin:0 0 14px">Введи свой номер телефона</p>
-    <form id="authForm" novalidate>
-      <input class="field" id="phone" type="tel" inputmode="numeric" autocomplete="tel" value="+7 ">
-      <p class="err" id="authErr" aria-live="polite"></p>
-      <button class="btn" type="submit">Войти</button>
-    </form>
-    <button class="link" id="authBack">← Выбрать другое имя</button>
-  </section>
+    <section class="card" id="vAuth" hidden>
+      <span class="eyebrow">Шаг 2 из 4 · Вход</span>
+      <h2>Подтверди номер</h2>
+      <p class="lead">Введи свой номер телефона, чтобы войти</p>
+      <div class="who-chip"><span class="av" id="authAv"></span><b id="authName"></b></div>
+      <form id="authForm" novalidate>
+        <label class="phone"><span class="cc">🇰🇿 +7</span><input class="field" id="phone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="700 000 00 00" aria-label="Номер телефона"></label>
+        <p class="err" id="authErr" aria-live="polite"></p>
+        <button class="btn" type="submit">Войти
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </form>
+      <button class="link" id="authBack">← Выбрать другое имя</button>
+    </section>
 
-  <section id="vSpin" hidden>
-    <p class="hello">Привет, <b id="who"></b>! Крути карусель 👇</p>
-    <div class="wheelbox"><div class="pin"></div><svg viewBox="0 0 200 200" aria-label="Карусель"><g id="wheel"></g><circle cx="100" cy="100" r="16" fill="#141414"/><circle cx="100" cy="100" r="6" fill="#fff"/></svg></div>
-    <div class="result" id="result" aria-live="polite"></div>
-    <button class="btn" id="spin">Крутить</button>
-    <div id="dayBox" hidden>
-      <hr class="dash">
-      <h2>В какой день делаешь?</h2>
-      <p class="month" id="monthName"></p>
-      <div class="cal" id="cal"></div>
-      <p class="err" id="dayErr" aria-live="polite"></p>
-      <button class="btn" id="dayOk" disabled>Выбери день</button>
-    </div>
-    <div id="cardBox" hidden>
-      <hr class="dash">
-      <img class="card" id="cardImg" alt="Карточка с очередью и датой">
-      <button class="btn wa" id="share">Поделиться в WhatsApp</button>
-      <button class="link" id="saveCard">Скачать картинку</button>
-    </div>
-    <button class="link" id="back">← Выбрать другое имя</button>
-  </section>
+    <section class="card" id="vSpin" hidden>
+      <span class="eyebrow" id="spinStep">Шаг 3 из 4 · Карусель</span>
+      <h2>Привет, <span id="who"></span>!</h2>
+      <p class="lead" id="spinLead">Жми кнопку — карусель решит твою очередь</p>
+      <div class="stage">
+        <svg class="pin" width="38" height="46" viewBox="0 0 38 46"><path d="M19 44L4 18a15 15 0 1130 0z" fill="#fff" stroke="#0d1b16" stroke-width="2.5" stroke-linejoin="round"/><circle cx="19" cy="16" r="6" fill="#12b981"/></svg>
+        <svg viewBox="-12 -12 224 224" aria-label="Карусель">
+          <defs>
+            <linearGradient id="g0" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a7d"/><stop offset="1" stop-color="#e8453a"/></linearGradient>
+            <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd76a"/><stop offset="1" stop-color="#f29d0b"/></linearGradient>
+            <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4fe0c4"/><stop offset="1" stop-color="#0f9b83"/></linearGradient>
+            <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7aaaff"/><stop offset="1" stop-color="#2f62e0"/></linearGradient>
+            <linearGradient id="gx" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eef2f0"/><stop offset="1" stop-color="#d3dcd8"/></linearGradient>
+            <radialGradient id="hub" cx=".35" cy=".3"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe7e3"/></radialGradient>
+          </defs>
+          <circle cx="100" cy="100" r="110" fill="#0d1b16"/>
+          <circle cx="100" cy="100" r="104" fill="none" stroke="#1f3a31" stroke-width="2"/>
+          <g class="bulbs" id="bulbs"></g>
+          <g id="wheel"></g>
+          <circle cx="100" cy="100" r="22" fill="url(#hub)" stroke="#0d1b16" stroke-width="3"/>
+          <text x="100" y="101" text-anchor="middle" dominant-baseline="central" font-family="Unbounded,sans-serif" font-size="9" font-weight="800" fill="#0a8f63">БК</text>
+        </svg>
+      </div>
+      <div class="result" id="result" aria-live="polite"></div>
+      <button class="btn spin" id="spin">Крутить карусель</button>
 
-  <section id="vDone" hidden>
-    <h2>Итог: порядок очереди</h2>
-    <ul class="rows" id="final"></ul>
-    <span class="stamp">ВСЕ ВЫБРАЛИ ✓</span>
-    <button class="btn dark" id="dl">Скачать итог (картинка)</button>
-  </section>
+      <div id="dayBox" class="sec" hidden>
+        <span class="eyebrow">Шаг 4 из 4 · Дата</span>
+        <h2>В какой день делаешь?</h2>
+        <div class="mhead"><b id="monthName"></b><span>Зачёркнутые дни недоступны</span></div>
+        <div class="cal" id="cal"></div>
+        <p class="err" id="dayErr" aria-live="polite"></p>
+        <button class="btn" id="dayOk" disabled>Выбери день</button>
+      </div>
 
-  <hr class="dash">
-  <section id="vBoard">
-    <h2 style="font-size:18px">Текущее состояние</h2>
-    <ul class="rows" id="board"></ul>
-  </section>
-  <div class="msg" id="msg"></div>
-  <button class="link" id="reset">Сбросить всё</button>
-</main>
+      <div id="cardBox" class="sec" hidden>
+        <span class="eyebrow">Готово ✓</span>
+        <h2>Расскажи всем</h2>
+        <p class="lead">Картинка уйдёт в WhatsApp вместе с текстом</p>
+        <img class="cardimg" id="cardImg" alt="Карточка с очередью и датой">
+        <button class="btn wa" id="share"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 00-8.6 15.1L2 22l5-1.3A10 10 0 1012 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1112 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 01-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>Поделиться в WhatsApp</button>
+        <button class="link" id="saveCard">↓ Скачать картинку</button>
+      </div>
+      <button class="link" id="back">← Выбрать другое имя</button>
+    </section>
+
+    <section class="card" id="vDone" hidden>
+      <span class="eyebrow">Итог</span>
+      <h2>Порядок очереди</h2>
+      <p class="lead">Все выбрали — вот расписание белой кассы</p>
+      <ul class="board" id="final"></ul>
+      <div class="stamp">✓ Все выбрали</div>
+      <button class="btn dark" id="dl">↓ Скачать итог</button>
+    </section>
+
+    <section class="card" id="vBoard">
+      <span class="eyebrow">Онлайн</span>
+      <h2 style="font-size:18px">Текущее состояние</h2>
+      <ul class="board" id="board" style="margin-top:8px"></ul>
+    </section>
+    <div class="msg" id="msg"></div>
+  </main>
+  <div class="foot"><button class="link" id="reset">⟲ Сбросить всё</button></div>
+</div>
 
 <div class="modal" id="modal" hidden>
   <form class="box" id="resetForm" novalidate>
-    <h3>Сброс</h3>
-    <p class="note" style="margin:0 0 12px">Введи код, чтобы сбросить все результаты</p>
-    <input class="field" id="code" type="password" inputmode="numeric" autocomplete="off" maxlength="8">
+    <div class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 108-8 8 8 0 00-6 2.7M4 4v4h4" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <h2 style="margin-top:6px">Сброс</h2>
+    <p class="lead">Введи код, чтобы удалить все результаты</p>
+    <input class="pin4" id="code" type="password" inputmode="numeric" autocomplete="off" maxlength="8" aria-label="Код">
     <p class="err" id="codeErr" aria-live="polite"></p>
-    <div class="row2"><button class="btn ghost" type="button" id="cancel">Отмена</button><button class="btn" type="submit">Сбросить</button></div>
+    <div class="row2"><button class="btn ghost" type="button" id="cancel">Отмена</button><button class="btn red" type="submit">Сбросить</button></div>
   </form>
 </div>
-
 <script>
 {
 const PEOPLE=[
@@ -172,8 +270,11 @@ const MONTHS={
   6:{y:2027,m:2,name:"Март",gen:"марта",skip:[]}
 };
 const WD=["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"];
-const COLORS=["var(--c1)","var(--c2)","var(--c3)","var(--c4)"];
-const HEX=["#ff4b3e","#ffb800","#18b26b","#1f6bff"];
+const COLORS=["linear-gradient(145deg,#ff8a7d,#e8453a)","linear-gradient(145deg,#ffd76a,#f29d0b)","linear-gradient(145deg,#4fe0c4,#0f9b83)","linear-gradient(145deg,#7aaaff,#2f62e0)"];
+const AV={maksadbek:"linear-gradient(145deg,#a3b1ab,#7d8c86)",elaman:"linear-gradient(145deg,#a3b1ab,#7d8c86)",kuanysh:"linear-gradient(145deg,#8b7bff,#5b45e0)",dias:"linear-gradient(145deg,#ff9a6b,#f0603a)",adilet:"linear-gradient(145deg,#43d6b0,#0f9b83)",alisher:"linear-gradient(145deg,#5aa7ff,#2f62e0)"};
+const CHECK='<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const CHEV='<svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const HEX=[["#ff8a7d","#e8453a"],["#ffd76a","#f29d0b"],["#4fe0c4","#0f9b83"],["#7aaaff","#2f62e0"]];
 const SALT="bk-b6916567";
 const H={
   dias:"a20fd8542fb128a3aa5f0261deab9f2d1043f886201c1dc7d86ed61df738c8fe",
@@ -216,50 +317,57 @@ function show(m){const e=$("#msg");e.textContent=m||"";e.classList.toggle("on",!
 
 function renderNames(){
   $("#names").innerHTML=PEOPLE.map(p=>{
-    if(p.done) return `<button class="nm" disabled>${esc(p.name)}<small>✓ уже сделал</small></button>`;
+    const av=`<span class="av" style="background:${AV[p.id]}">${esc(p.name[0])}</span>`;
+    if(p.done) return `<button class="nm" disabled>${av}<span><b>${esc(p.name)}</b><small>Уже сделал · №${p.no}</small></span><span class="ok">${CHECK}</span></button>`;
     const n=picks[p.id];
-    if(n) return `<button class="nm took" data-id="${p.id}">${esc(p.name)}<small>${days[p.id]?n+" · "+days[p.id]+" "+MONTHS[n].gen:"Очередь: "+n+" · день не выбран"}</small></button>`;
-    return `<button class="nm" data-id="${p.id}" ${loaded?"":"disabled"}>${esc(p.name)}<small>${loaded?"выбрать":"загрузка…"}</small></button>`;
+    if(n) return `<button class="nm took" data-id="${p.id}">${av}<span><b>${esc(p.name)}</b><small>№${n} · ${days[p.id]?days[p.id]+" "+MONTHS[n].gen:"выбрать день"}</small></span>${CHEV}</button>`;
+    return `<button class="nm" data-id="${p.id}" ${loaded?"":"disabled"}>${av}<span><b>${esc(p.name)}</b><small>${loaded?"Нажми, чтобы войти и крутить":"Загрузка…"}</small></span>${CHEV}</button>`;
   }).join("");
 }
 function seg(i){
-  const a0=(i*360/N-90)*Math.PI/180,a1=((i+1)*360/N-90)*Math.PI/180,r=96;
+  const a0=(i*360/N-90)*Math.PI/180,a1=((i+1)*360/N-90)*Math.PI/180,r=98;
   const x0=100+r*Math.cos(a0),y0=100+r*Math.sin(a0),x1=100+r*Math.cos(a1),y1=100+r*Math.sin(a1);
-  const am=((i+.5)*360/N-90)*Math.PI/180,tx=100+56*Math.cos(am),ty=100+56*Math.sin(am),nx=100+81*Math.cos(am),ny=100+81*Math.sin(am);
-  const n=NUMS[i],o=ownerOf(n),deg=(i+.5)*360/N;
-  return `<path d="M100 100L${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z" fill="${o?"#d6d6d6":COLORS[i]}" stroke="#fff" stroke-width="3"/>
-  <text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" font-size="34" font-weight="800" fill="${o?"#9a9a9a":"#fff"}" text-anchor="middle" dominant-baseline="central" transform="rotate(${deg} ${tx.toFixed(1)} ${ty.toFixed(1)})">${n}</text>
-  <text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="9" font-weight="700" fill="${o?"#555":"rgba(255,255,255,.9)"}" text-anchor="middle" dominant-baseline="central" transform="rotate(${deg} ${nx.toFixed(1)} ${ny.toFixed(1)})">${o?esc(nameOf(o)):MONTHS[n].name}</text>`;
+  const am=((i+.5)*360/N-90)*Math.PI/180,tx=100+60*Math.cos(am),ty=100+60*Math.sin(am),nx=100+84*Math.cos(am),ny=100+84*Math.sin(am);
+  const n=NUMS[i],o=ownerOf(n),deg=(i+.5)*360/N,f=v=>v.toFixed(2);
+  return `<path d="M100 100L${f(x0)} ${f(y0)}A${r} ${r} 0 0 1 ${f(x1)} ${f(y1)}Z" fill="url(#${o?"gx":"g"+i})" stroke="#0d1b16" stroke-width="2.5"/>
+  <text x="${f(tx)}" y="${f(ty)}" font-family="Unbounded,sans-serif" font-size="36" font-weight="800" fill="${o?"#a9b6b1":"#fff"}" text-anchor="middle" dominant-baseline="central" transform="rotate(${deg} ${f(tx)} ${f(ty)})">${n}</text>
+  <text x="${f(nx)}" y="${f(ny)}" font-family="Manrope,sans-serif" font-size="9.5" font-weight="800" letter-spacing=".4" fill="${o?"#6f7f79":"rgba(255,255,255,.95)"}" text-anchor="middle" dominant-baseline="central" transform="rotate(${deg} ${f(nx)} ${f(ny)})">${o?esc(nameOf(o)):MONTHS[n].name.toUpperCase()}</text>`;
 }
-function renderWheel(){$("#wheel").innerHTML=`<circle cx="100" cy="100" r="99" fill="#141414"/>`+Array.from({length:N},(_,i)=>seg(i)).join("")}
+function renderWheel(){$("#wheel").innerHTML=Array.from({length:N},(_,i)=>seg(i)).join("")}
+$("#bulbs").innerHTML=Array.from({length:20},(_,i)=>{const a=i*18*Math.PI/180;return `<circle cx="${(100+104.5*Math.cos(a)).toFixed(2)}" cy="${(100+104.5*Math.sin(a)).toFixed(2)}" r="2.6" fill="${i%2?"#ffd76a":"#7ef0c8"}"/>`}).join("");
 function rowsHtml(){
   return [
-    ...PEOPLE.filter(p=>p.done).map(p=>`<li class="done"><span class="no">${p.no}</span><span class="who">${esc(p.name)}</span><span class="st">уже сделал ✓</span></li>`),
+    ...PEOPLE.filter(p=>p.done).map(p=>`<li class="done"><span class="no">${p.no}</span><span class="who">${esc(p.name)}<small>Очередь ${p.no}</small></span><span class="tag ok">Сделал ✓</span></li>`),
     ...NUMS.map((n,i)=>{const o=ownerOf(n);
-      return o?`<li><span class="no" style="background:${COLORS[i]}">${n}</span><span class="who">${esc(nameOf(o))}</span><span class="st">${days[o]?days[o]+" "+MONTHS[n].gen:MONTHS[n].name+" · день?"}</span></li>`
-             :`<li class="wait"><span class="no">${n}</span><span class="who" style="color:#aaa">— свободно —</span><span class="st">${MONTHS[n].name}</span></li>`})
+      return o?`<li><span class="no" style="background:${COLORS[i]}">${n}</span><span class="who">${esc(nameOf(o))}<small>${MONTHS[n].name}</small></span><span class="tag${days[o]?" ok":""}">${days[o]?days[o]+" "+MONTHS[n].gen:"день?"}</span></li>`
+             :`<li class="wait"><span class="no">${n}</span><span class="who">Свободно<small>${MONTHS[n].name}</small></span><span class="tag">ждёт</span></li>`})
   ].join("");
 }
 function renderBoard(){const r=rowsHtml();$("#board").innerHTML=r;$("#final").innerHTML=r}
+let curView="pick";
+function steps(){const n=curView==="pick"?1:curView==="auth"?2:curView==="done"?4:(me&&picks[me]?4:3);document.querySelectorAll("#steps i").forEach((e,i)=>e.classList.toggle("on",i<n))}
 function view(v){
+  const ch=v!==curView;curView=v;
   for(const k of ["Pick","Auth","Spin","Done"])$("#v"+k).hidden=v!==k.toLowerCase();
-  $("#vBoard").hidden=v==="done";
+  $("#vBoard").hidden=v==="done"||v==="auth";steps();
+  if(ch)window.scrollTo({top:0,behavior:"smooth"});
 }
 
 function renderSpinState(){
   if(!me)return;const n=picks[me];
   $("#spin").hidden=!!n&&!spinning;
   $("#spin").disabled=spinning;
-  $("#spin").textContent=spinning?"Крутится…":"Крутить";
-  if(n&&!spinning)$("#result").innerHTML=`<div class="big">${n}</div><p><b>${esc(nameOf(me))}</b>, твоя очередь — <b>${n}</b>, месяц — <b>${MONTHS[n].name}</b></p>`;
+  $("#spin").textContent=spinning?"Крутится…":"Крутить карусель";
+  $("#spinLead").textContent=n?"Карусель решила — вот твоя очередь":"Жми кнопку — карусель решит твою очередь";
+  if(n&&!spinning)$("#result").innerHTML=`<div class="res"><span class="num" style="background:${COLORS[idx(n)]}">${n}</span><span><small>Твоя очередь</small><b>№${n} · ${MONTHS[n].name}</b><small>${days[me]?"День: "+dateText(n,days[me]):"Осталось выбрать день"}</small></span></div>`;
   else if(!spinning)$("#result").innerHTML="";
   const needDay=!!n&&!days[me]&&!spinning;
   $("#dayBox").hidden=!needDay;
-  if(needDay&&!$("#cal").dataset.for)renderCal();
+  if(needDay&&!$("#cal").dataset.for)renderCal();steps();
   $("#cardBox").hidden=!(n&&days[me]&&!spinning);
   if(n&&days[me]&&!spinning&&$("#cardImg").dataset.key!==me+n+days[me])buildCard();
 }
-function renderAll(){renderNames();renderBoard();if(!spinning)renderWheel();renderSpinState();if(allDone()&&!spinning&&!me)view("done")}
+function renderAll(){steps();renderNames();renderBoard();if(!spinning)renderWheel();renderSpinState();if(allDone()&&!spinning&&!me)view("done")}
 
 function renderCal(){
   const n=picks[me],M=MONTHS[n];selDay=0;
@@ -267,7 +375,7 @@ function renderCal(){
   const first=(new Date(M.y,M.m,1).getDay()+6)%7,len=new Date(M.y,M.m+1,0).getDate();
   let h=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].map(d=>`<span class="wd">${d}</span>`).join("");
   for(let i=0;i<first;i++)h+="<span></span>";
-  for(let d=1;d<=len;d++)h+=`<button type="button" data-d="${d}" ${M.skip.includes(d)?"disabled":""}>${d}</button>`;
+  for(let d=1;d<=len;d++){const wd=new Date(M.y,M.m,d).getDay();h+=`<button type="button" data-d="${d}" class="${wd===0||wd===6?"we":""}" ${M.skip.includes(d)?"disabled":""}>${d}</button>`}
   $("#cal").innerHTML=h;$("#cal").dataset.for=me;
   $("#dayOk").disabled=true;$("#dayOk").textContent="Выбери день";$("#dayErr").textContent="";
 }
@@ -293,17 +401,17 @@ $("#names").addEventListener("click",e=>{
   const b=e.target.closest("button[data-id]");if(!b)return;
   me=b.dataset.id;show("");
   if((picks[me]&&days[me])||authed.has(me)){openSpin();return}
-  $("#authName").textContent=nameOf(me);$("#phone").value="+7 ";$("#authErr").textContent="";view("auth");
-  setTimeout(()=>{const p=$("#phone");p.focus();p.setSelectionRange(p.value.length,p.value.length)},50);
+  $("#authName").textContent=nameOf(me);const av=$("#authAv");av.textContent=nameOf(me)[0];av.style.background=AV[me];$("#phone").value="";$("#authErr").textContent="";view("auth");
+  setTimeout(()=>$("#phone").focus(),80);
 });
 
-function fmt(d){d=d.slice(0,10);let o="+7 ";if(d.length>0)o+=d.slice(0,3);if(d.length>3)o+=" "+d.slice(3,6);if(d.length>6)o+=" "+d.slice(6,10);return o}
-$("#phone").addEventListener("input",e=>{let d=e.target.value.replace(/\D/g,"");if(d.startsWith("7")||d.startsWith("8"))d=d.slice(1);e.target.value=fmt(d);$("#authErr").textContent=""});
-$("#phone").addEventListener("keydown",e=>{if(e.key==="Backspace"&&e.target.value.length<=3)e.preventDefault()});
+function fmt(d){d=d.slice(0,10);return [d.slice(0,3),d.slice(3,6),d.slice(6,8),d.slice(8,10)].filter(Boolean).join(" ")}
+function digits(v){let d=v.replace(/\D/g,"");if(d.length>10&&(d[0]==="7"||d[0]==="8"))d=d.slice(1);return d.slice(0,10)}
+$("#phone").addEventListener("input",e=>{e.target.value=fmt(digits(e.target.value));$("#authErr").textContent=""});
 $("#authForm").addEventListener("submit",async e=>{
   e.preventDefault();
-  const d=$("#phone").value.replace(/\D/g,"").slice(1);
-  if(d.length!==10){$("#authErr").textContent="Введи номер полностью: +7 XXX XXX XX XX";return}
+  const d=digits($("#phone").value);
+  if(d.length!==10){$("#authErr").textContent="Введи номер полностью: 10 цифр после +7";return}
   let ok=false;try{ok=(await sha(SALT+":"+d))===H[me]}catch(x){$("#authErr").textContent="Открой ссылку в обычном браузере (Safari/Chrome).";return}
   if(!ok){$("#authErr").textContent=`Неверный номер. Ваш номер заканчивается на ${person(me).tail} — введите этот номер.`;return}
   authed.add(me);openSpin();
@@ -334,22 +442,28 @@ function canvasRows(x,W,y0,list,rowH){
     x.strokeStyle="#e6e6e6";x.lineWidth=2;x.beginPath();x.moveTo(100,y+rowH/2);x.lineTo(W-100,y+rowH/2);x.stroke();
   });x.textBaseline="alphabetic";
 }
+function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath()}
+function bgPaint(x,W,Hh){const g=x.createLinearGradient(0,0,0,Hh);g.addColorStop(0,"#0b3d2f");g.addColorStop(1,"#06281f");x.fillStyle=g;x.fillRect(0,0,W,Hh);
+  const r=x.createRadialGradient(W*.85,0,0,W*.85,0,W*.8);r.addColorStop(0,"rgba(34,195,166,.45)");r.addColorStop(1,"rgba(34,195,166,0)");x.fillStyle=r;x.fillRect(0,0,W,Hh)}
+async function fontsOk(){try{await Promise.all([document.fonts.load("800 60px Unbounded"),document.fonts.load("800 40px Manrope"),document.fonts.load("700 40px Manrope")]);await document.fonts.ready}catch(e){}}
 async function buildCard(){
-  const n=picks[me],d=days[me],nm=nameOf(me),i=idx(n);
-  const W=1080,Hh=1080,c=document.createElement("canvas");c.width=W;c.height=Hh;const x=c.getContext("2d");
-  try{await document.fonts.ready}catch(e){}
-  x.fillStyle="#1f3df0";x.fillRect(0,0,W,Hh);
-  x.fillStyle="#fff";x.fillRect(90,70,W-180,Hh-140);
-  x.fillStyle="#141414";x.textAlign="center";x.font="800 76px Rubik, sans-serif";x.fillText("Белый касса",W/2,190);
-  x.strokeStyle="#dcdcdc";x.setLineDash([12,10]);x.lineWidth=4;x.beginPath();x.moveTo(150,240);x.lineTo(W-150,240);x.stroke();x.setLineDash([]);
-  x.font="700 58px Rubik, sans-serif";x.fillText(nm,W/2,330);
-  x.font="400 34px Rubik, sans-serif";x.fillStyle="#6b6b6b";x.fillText("выпала очередь",W/2,385);
-  x.fillStyle=HEX[i];x.beginPath();x.arc(W/2,510,100,0,7);x.fill();
-  x.fillStyle="#fff";x.font="800 130px Rubik, sans-serif";x.textBaseline="middle";x.fillText(String(n),W/2,518);x.textBaseline="alphabetic";
-  x.fillStyle="#141414";x.font="800 72px Rubik, sans-serif";x.fillText(d+" "+MONTHS[n].gen,W/2,720);
-  x.font="400 36px Rubik, sans-serif";x.fillStyle="#6b6b6b";x.fillText(WD[new Date(MONTHS[n].y,MONTHS[n].m,d).getDay()]+", делаю белую кассу",W/2,780);
-  x.save();x.translate(W/2,890);x.rotate(-.05);x.strokeStyle="#e8262b";x.lineWidth=5;x.strokeRect(-290,-48,580,84);
-  x.fillStyle="#e8262b";x.font="800 42px Rubik, sans-serif";x.fillText("ЖДУ ВСЕХ! 🎉",0,10);x.restore();
+  const n=picks[me],d=days[me],nm=nameOf(me),i=idx(n),M=MONTHS[n];
+  const W=1080,Hh=1350,c=document.createElement("canvas");c.width=W;c.height=Hh;const x=c.getContext("2d");
+  await fontsOk();
+  bgPaint(x,W,Hh);
+  x.fillStyle="#fff";x.textAlign="left";x.font="800 54px Unbounded, sans-serif";x.fillText("Белый касса",90,150);
+  x.fillStyle="rgba(255,255,255,.7)";x.font="700 30px Manrope, sans-serif";x.fillText("Карусель очереди",90,200);
+  x.save();x.shadowColor="rgba(0,0,0,.35)";x.shadowBlur=60;x.shadowOffsetY=30;rr(x,70,260,W-140,980,56);x.fillStyle="#fff";x.fill();x.restore();
+  x.textAlign="center";x.fillStyle="#8a9a93";x.font="800 30px Manrope, sans-serif";x.fillText("ВЫПАЛА ОЧЕРЕДЬ",W/2,360);
+  const g=x.createLinearGradient(W/2-150,400,W/2+150,700);g.addColorStop(0,HEX[i][0]);g.addColorStop(1,HEX[i][1]);
+  x.save();x.shadowColor=HEX[i][1]+"88";x.shadowBlur=50;x.shadowOffsetY=20;rr(x,W/2-150,400,300,300,80);x.fillStyle=g;x.fill();x.restore();
+  x.fillStyle="#fff";x.font="800 190px Unbounded, sans-serif";x.textBaseline="middle";x.fillText(String(n),W/2,560);x.textBaseline="alphabetic";
+  x.fillStyle="#0d1b16";x.font="800 76px Manrope, sans-serif";x.fillText(nm,W/2,820);
+  x.strokeStyle="#e6ece9";x.setLineDash([14,12]);x.lineWidth=4;x.beginPath();x.moveTo(150,880);x.lineTo(W-150,880);x.stroke();x.setLineDash([]);
+  x.fillStyle="#0a8f63";x.font="800 70px Unbounded, sans-serif";x.fillText(d+" "+M.gen,W/2,990);
+  x.fillStyle="#4a5b54";x.font="700 36px Manrope, sans-serif";x.fillText(WD[new Date(M.y,M.m,d).getDay()]+" · делаю белую кассу",W/2,1050);
+  rr(x,W/2-250,1105,500,92,46);x.fillStyle="#e6f8f1";x.fill();
+  x.fillStyle="#0a8f63";x.font="800 40px Manrope, sans-serif";x.fillText("Жду всех! 🎉",W/2,1165);
   cardBlob=await new Promise(r=>c.toBlob(r,"image/png"));
   const img=$("#cardImg");if(img.src)URL.revokeObjectURL(img.src);img.src=URL.createObjectURL(cardBlob);img.dataset.key=me+n+d;
 }
@@ -380,17 +494,23 @@ $("#resetForm").addEventListener("submit",async e=>{
 // итог картинкой
 $("#dl").addEventListener("click",async()=>{
   try{
-    const W=900,rowH=86,list=[...PEOPLE.filter(p=>p.done).map(p=>({n:String(p.no),name:p.name,st:"уже сделал ✓",c:"#bdbdbd"})),
+    const list=[...PEOPLE.filter(p=>p.done).map(p=>({n:String(p.no),name:p.name,st:"Сделал ✓",c:["#c3ceca","#9aaaa4"]})),
       ...NUMS.map((n,i)=>{const o=ownerOf(n);return {n:String(n),name:nameOf(o)||"—",st:o&&days[o]?days[o]+" "+MONTHS[n].gen:MONTHS[n].name,c:HEX[i]}})];
-    const Ht=260+list.length*rowH+120,c=document.createElement("canvas");c.width=W;c.height=Ht;const x=c.getContext("2d");
-    try{await document.fonts.ready}catch(e){}
-    x.fillStyle="#1f3df0";x.fillRect(0,0,W,Ht);x.fillStyle="#fff";x.fillRect(60,30,W-120,Ht-60);
-    x.fillStyle="#141414";x.textAlign="center";x.font="800 64px Rubik, sans-serif";x.fillText("Белый касса",W/2,130);
-    x.font="400 26px Rubik, sans-serif";x.fillStyle="#6b6b6b";x.fillText("Итог: порядок очереди",W/2,180);
-    x.strokeStyle="#dcdcdc";x.setLineDash([10,8]);x.lineWidth=3;x.beginPath();x.moveTo(100,215);x.lineTo(W-100,215);x.stroke();x.setLineDash([]);
-    canvasRows(x,W,260,list,rowH);
-    x.save();x.translate(W/2,Ht-75);x.rotate(-.08);x.strokeStyle="#e8262b";x.lineWidth=4;x.strokeRect(-170,-32,340,56);
-    x.fillStyle="#e8262b";x.font="800 30px Rubik, sans-serif";x.textAlign="center";x.fillText("ВСЕ ВЫБРАЛИ ✓",0,6);x.restore();
+    const W=1080,rowH=120,Ht=330+list.length*rowH+170,c=document.createElement("canvas");c.width=W;c.height=Ht;const x=c.getContext("2d");
+    await fontsOk();
+    bgPaint(x,W,Ht);
+    x.fillStyle="#fff";x.textAlign="left";x.font="800 54px Unbounded, sans-serif";x.fillText("Белый касса",90,140);
+    x.fillStyle="rgba(255,255,255,.7)";x.font="700 30px Manrope, sans-serif";x.fillText("Итог · порядок очереди",90,190);
+    x.save();x.shadowColor="rgba(0,0,0,.35)";x.shadowBlur=60;x.shadowOffsetY=30;rr(x,70,240,W-140,Ht-310,48);x.fillStyle="#fff";x.fill();x.restore();
+    list.forEach((r,i)=>{const y=300+i*rowH+rowH/2;
+      const g=x.createLinearGradient(130,y-40,210,y+40);g.addColorStop(0,r.c[0]);g.addColorStop(1,r.c[1]);rr(x,130,y-40,80,80,24);x.fillStyle=g;x.fill();
+      x.fillStyle="#fff";x.font="800 38px Unbounded, sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText(r.n,170,y+2);
+      x.fillStyle="#0d1b16";x.textAlign="left";x.font="800 42px Manrope, sans-serif";x.fillText(r.name,240,y);
+      x.font="800 32px Manrope, sans-serif";const tw=x.measureText(r.st).width+48;rr(x,W-130-tw,y-30,tw,60,30);x.fillStyle="#e6f8f1";x.fill();
+      x.fillStyle="#0a8f63";x.textAlign="center";x.fillText(r.st,W-130-tw/2,y+1);
+      if(i<list.length-1){x.strokeStyle="#eef2f0";x.lineWidth=2;x.beginPath();x.moveTo(130,y+rowH/2);x.lineTo(W-130,y+rowH/2);x.stroke()}
+    });
+    x.textBaseline="alphabetic";x.textAlign="center";x.fillStyle="rgba(255,255,255,.6)";x.font="700 28px Manrope, sans-serif";x.fillText("✓ Все выбрали",W/2,Ht-30);
     const b=await new Promise(r=>c.toBlob(r,"image/png"));saveBlob(b,"belyi-kassa-itog.png");
   }catch(e){show("Не удалось скачать — сделай скриншот.")}
 });
