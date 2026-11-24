@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Белый касса</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: дружеская игра, весело и чётко
+   IDEA: кассовый чек — белая лента с зубчатым краем
+   PICTURE: большое колесо с номерами очереди
+   COLOUR and TYPE: белая лента на насыщенном синем, 4 ярких сектора, Rubik
+   LAYOUT: одна колонка-чек по центру */
+:root{color-scheme:light dark;--bg:light-dark(#1f3df0,#0b1440);--paper:light-dark(#fff,#f4f4ef);--ink:#141414;--mute:#6b6b6b;--line:#dcdcdc;--red:#e8262b;
+--c1:#ff4b3e;--c2:#ffb800;--c3:#18b26b;--c4:#1f6bff}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Rubik,system-ui,sans-serif;overflow-x:clip;min-height:100vh;padding:24px 14px 48px}
+.receipt{max-width:440px;margin:0 auto;background:var(--paper);position:relative;padding:28px 22px 30px;filter:drop-shadow(0 18px 30px rgba(0,0,0,.28))}
+.receipt::before,.receipt::after{content:"";position:absolute;left:0;right:0;height:12px;background:linear-gradient(-45deg,transparent 8px,var(--paper) 0) 0 0/16px 12px repeat-x,linear-gradient(45deg,transparent 8px,var(--paper) 0) 0 0/16px 12px repeat-x}
+.receipt::before{top:-11px;transform:rotate(180deg)}
+.receipt::after{bottom:-11px}
+h1{font-weight:800;font-size:40px;line-height:1.05;margin:0;text-align:center;letter-spacing:-.5px}
+.sub{text-align:center;color:var(--mute);margin:6px 0 0;font-size:14px}
+.dash{border:0;border-top:2px dashed var(--line);margin:20px 0}
+h2{font-size:22px;margin:0 0 14px;text-align:center}
+.names{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.nm{font:inherit;font-weight:700;font-size:17px;min-height:64px;border:2px solid var(--ink);background:#fff;color:var(--ink);border-radius:14px;cursor:pointer;padding:8px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:transform .12s}
+.nm:hover:not(:disabled){transform:translateY(-2px);background:#fff6d6}
+.nm:focus-visible,.btn:focus-visible,.link:focus-visible{outline:3px solid var(--c4);outline-offset:3px}
+.nm small{font-weight:500;font-size:13px;color:var(--mute)}
+.nm:disabled{cursor:not-allowed;border-color:var(--line);color:#a3a3a3;background:#f3f3f3}
+.nm.took{border-color:var(--c3);color:var(--ink);background:#eafaf2}
+.nm.took small{color:#0d7a48;font-weight:700}
+.wheelbox{position:relative;width:min(100%,340px);aspect-ratio:1;margin:6px auto 0}
+.wheelbox svg{position:absolute;inset:0;width:100%;height:100%}
+#wheel{transition:transform 4.6s cubic-bezier(.12,.8,.12,1);transform-origin:50% 50%}
+.pin{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:30px solid var(--ink);z-index:2;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+.hello{text-align:center;font-size:18px;margin:0 0 12px}
+.hello b{font-weight:800}
+.btn{display:block;width:100%;font:inherit;font-weight:800;font-size:19px;min-height:56px;margin-top:18px;border:0;border-radius:14px;background:var(--red);color:#fff;cursor:pointer;box-shadow:0 4px 0 #a5161a}
+.btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #a5161a}
+.btn:disabled{background:#c9c9c9;box-shadow:0 4px 0 #a9a9a9;cursor:not-allowed}
+.btn.dark{background:var(--ink);box-shadow:0 4px 0 #000}
+.link{display:block;margin:14px auto 0;background:none;border:0;font:inherit;color:var(--mute);text-decoration:underline;cursor:pointer;min-height:44px}
+.result{text-align:center;margin-top:16px;min-height:72px}
+.result .big{font-size:64px;font-weight:800;line-height:1;color:var(--red)}
+.result p{margin:4px 0 0}
+.rows{list-style:none;padding:0;margin:0}
+.rows li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px dotted var(--line);font-size:17px}
+.rows .no{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;font-size:18px}
+.rows .who{flex:1;font-weight:700}
+.rows .st{color:var(--mute);font-size:14px;white-space:nowrap}
+.rows li.done .no{background:#bdbdbd}
+.rows li.wait .no{background:#fff;border:2px dashed var(--line);color:#bbb}
+.stamp{display:block;width:max-content;margin:18px auto 0;border:3px solid var(--red);color:var(--red);font-weight:800;padding:4px 14px;border-radius:8px;transform:rotate(-6deg);font-size:18px}
+.note{font-size:13px;color:var(--mute);text-align:center;margin:12px 0 0}
+.msg{background:#fff3cd;border-radius:10px;padding:10px 12px;font-size:14px;margin-top:12px;display:none}
+.msg.on{display:block}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){#wheel{transition-duration:.01s}}
+</style>
+</head>
+<body>
+<main class="receipt">
+  <h1>Белый касса</h1>
+  <p class="sub">Кезек карусельі · <span id="date"></span></p>
+  <hr class="dash">
+
+  <section id="vPick">
+    <h2>Атыңды таңда</h2>
+    <div class="names" id="names"></div>
+    <p class="note">Әр адам бір рет қана айналдырады. Шыққан сан — сенің кезегің.</p>
+  </section>
+
+  <section id="vSpin" hidden>
+    <p class="hello">Сәлем, <b id="who"></b>! Карусельді айналдыр 👇</p>
+    <div class="wheelbox"><div class="pin"></div><svg viewBox="0 0 200 200" aria-label="Карусель"><g id="wheel"></g><circle cx="100" cy="100" r="16" fill="#141414"/><circle cx="100" cy="100" r="6" fill="#fff"/></svg></div>
+    <div class="result" id="result" aria-live="polite"></div>
+    <button class="btn" id="spin">Айналдыру</button>
+    <button class="link" id="back">← Басқа атты таңдау</button>
+  </section>
+
+  <section id="vDone" hidden>
+    <h2>Итог: кезек реті</h2>
+    <ul class="rows" id="final"></ul>
+    <span class="stamp">БӘРІ ТАҢДАДЫ ✓</span>
+    <button class="btn dark" id="dl">Итогты скачать (сурет)</button>
+  </section>
+
+  <hr class="dash">
+  <section id="vBoard">
+    <h2 style="font-size:18px">Қазіргі жағдай</h2>
+    <ul class="rows" id="board"></ul>
+  </section>
+  <div class="msg" id="msg"></div>
+</main>
+
+<script>
+{
+const PEOPLE=[
+  {id:"maksadbek",name:"Максадбек",done:true},
+  {id:"elaman",name:"Еламан",done:true},
+  {id:"kuanysh",name:"Қуаныш"},
+  {id:"dias",name:"Диас"},
+  {id:"adilet",name:"Әділет"},
+  {id:"alisher",name:"Алишер"}
+];
+const ACTIVE=PEOPLE.filter(p=>!p.done);
+const N=ACTIVE.length; // 4 кезек
+const COLORS=["var(--c1)","var(--c2)","var(--c3)","var(--c4)"];
+const HEX=["#ff4b3e","#ffb800","#18b26b","#1f6bff"];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ORDER=JSON.parse(atob("==QfzAiOiIXZoNXasFmIgwSMgojI0VGbpRWYiACLyAiOiMXYpRmIgwCNgojIoNXeuFWdrJye".split("").reverse().join("")));
+const TOPIC="belyi-kassa-cd6ff94b1c6b6fcf",API="https://ntfy.sh/"+TOPIC;
+let spun=new Set(), picks={}, me=null, rot=0, spinning=false, loaded=false;
+try{JSON.parse(localStorage.getItem("bk-spun")||"[]").forEach(id=>spun.add(id))}catch(e){}
+function syncPicks(){picks={};spun.forEach(id=>{if(ORDER[id])picks[id]=ORDER[id]});try{localStorage.setItem("bk-spun",JSON.stringify([...spun]))}catch(e){}}
+syncPicks();
+
+$("#date").textContent=new Date().toLocaleDateString("ru-RU");
+
+function nameOf(id){return (PEOPLE.find(p=>p.id===id)||{}).name||""}
+function ownerOf(n){return Object.keys(picks).find(k=>picks[k]===n)}
+function allDone(){return ACTIVE.every(p=>picks[p.id])}
+function show(msg){const m=$("#msg");m.textContent=msg||"";m.classList.toggle("on",!!msg)}
+
+function renderNames(){
+  $("#names").innerHTML=PEOPLE.map(p=>{
+    if(p.done) return `<button class="nm" disabled>${esc(p.name)}<small>✓ жасап қойды</small></button>`;
+    const n=picks[p.id];
+    if(n) return `<button class="nm took" data-id="${p.id}">${esc(p.name)}<small>Кезегі: ${n}</small></button>`;
+    return `<button class="nm" data-id="${p.id}" ${loaded?"":"disabled"}>${esc(p.name)}<small>${loaded?"таңдау":"жүктелуде…"}</small></button>`;
+  }).join("");
+}
+
+function seg(i){
+  const a0=(i*360/N-90)*Math.PI/180,a1=((i+1)*360/N-90)*Math.PI/180,r=96;
+  const x0=100+r*Math.cos(a0),y0=100+r*Math.sin(a0),x1=100+r*Math.cos(a1),y1=100+r*Math.sin(a1);
+  const am=((i+.5)*360/N-90)*Math.PI/180;
+  const tx=100+58*Math.cos(am),ty=100+58*Math.sin(am);
+  const nx=100+80*Math.cos(am),ny=100+80*Math.sin(am);
+  const n=i+1,o=ownerOf(n),deg=(i+.5)*360/N;
+  const fill=o?"#d6d6d6":COLORS[i];
+  return `<path d="M100 100L${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z" fill="${fill}" stroke="#fff" stroke-width="3"/>
+  <text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" font-size="34" font-weight="800" fill="${o?"#9a9a9a":"#fff"}" text-anchor="middle" dominant-baseline="central" transform="rotate(${deg} ${tx.toFixed(1)} ${ty.toFixed(1)})">${n}</text>
+  ${o?`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="10" font-weight="700" fill="#555" text-anchor="middle" dominant-baseline="central" transform="rotate(${deg} ${nx.toFixed(1)} ${ny.toFixed(1)})">${esc(nameOf(o))}</text>`:""}`;
+}
+function renderWheel(){
+  $("#wheel").innerHTML=`<circle cx="100" cy="100" r="99" fill="#141414"/>`+Array.from({length:N},(_,i)=>seg(i)).join("");
+}
+
+function renderBoard(){
+  const rows=[
+    ...PEOPLE.filter(p=>p.done).map(p=>`<li class="done"><span class="no">✓</span><span class="who">${esc(p.name)}</span><span class="st">жасап қойды</span></li>`),
+    ...Array.from({length:N},(_,i)=>{const n=i+1,o=ownerOf(n);
+      return o?`<li><span class="no" style="background:${COLORS[i]}">${n}</span><span class="who">${esc(nameOf(o))}</span><span class="st">${n}-кезек</span></li>`
+             :`<li class="wait"><span class="no">${n}</span><span class="who" style="color:#aaa">— бос —</span><span class="st">күтуде</span></li>`})
+  ].join("");
+  $("#board").innerHTML=rows;
+  $("#final").innerHTML=rows;
+}
+
+function view(v){
+  $("#vPick").hidden=v!=="pick";$("#vSpin").hidden=v!=="spin";$("#vDone").hidden=v!=="done";
+  $("#vBoard").hidden=v==="done";
+}
+
+function renderSpinState(){
+  if(!me)return;
+  const n=picks[me];
+  $("#spin").disabled=!!n||spinning;
+  $("#spin").textContent=n?"Сен айналдырып қойдың":"Айналдыру";
+  if(n&&!spinning) $("#result").innerHTML=`<div class="big">${n}</div><p><b>${esc(nameOf(me))}</b>, сенің кезегің — <b>${n}</b></p>`;
+  else if(!spinning) $("#result").innerHTML="";
+}
+
+function renderAll(){
+  renderNames();renderBoard();
+  if(!spinning) renderWheel();
+  renderSpinState();
+  if(allDone()&&!spinning) view("done");
+}
+
+$("#names").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-id]");if(!b)return;
+  me=b.dataset.id;$("#who").textContent=nameOf(me);
+  show("");view("spin");renderWheel();renderSpinState();
+  if(picks[me]){rot=0;$("#wheel").style.transition="none";$("#wheel").style.transform=`rotate(${-((picks[me]-.5)*360/N)}deg)`;}
+  else{$("#wheel").style.transform=`rotate(${rot}deg)`}
+});
+$("#back").addEventListener("click",()=>{if(spinning)return;me=null;view(allDone()?"done":"pick")});
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+$("#spin").addEventListener("click",async()=>{
+  if(!me||picks[me]||spinning)return;
+  spinning=true;$("#spin").disabled=true;$("#spin").textContent="Айналып жатыр…";$("#result").innerHTML="";show("");
+  try{await fetch(API,{method:"POST",body:"spun:"+me})}catch(e){show("Интернет әлсіз — нәтиже тек осы телефонда сақталды.")}
+  const n=ORDER[me],center=(n-.5)*360/N,jit=(Math.random()-.5)*(360/N)*.6;
+  rot=Math.ceil(rot/360)*360+360*6-center+jit;
+  const w=$("#wheel");w.style.transition="";void w.getBoundingClientRect();w.style.transform=`rotate(${rot}deg)`;
+  await sleep(matchMedia("(prefers-reduced-motion:reduce)").matches?100:4800);
+  spun.add(me);syncPicks();spinning=false;
+  renderNames();renderBoard();renderWheel();renderSpinState();
+  if(allDone()){await sleep(2200);if(!spinning)view("done")}
+});
+
+// ---- download PNG ----
+async function makePng(){
+  const W=900,rowH=86,list=[...PEOPLE.filter(p=>p.done).map(p=>({n:"✓",name:p.name,st:"жасап қойды",c:"#bdbdbd"})),
+    ...Array.from({length:N},(_,i)=>({n:String(i+1),name:nameOf(ownerOf(i+1))||"—",st:(i+1)+"-кезек",c:HEX[i]}))];
+  const H=260+list.length*rowH+120;
+  const c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  try{await document.fonts.ready}catch(e){}
+  x.fillStyle="#1f3df0";x.fillRect(0,0,W,H);
+  x.fillStyle="#fff";x.fillRect(60,30,W-120,H-60);
+  x.fillStyle="#141414";x.textAlign="center";x.font="800 64px Rubik, sans-serif";x.fillText("Белый касса",W/2,130);
+  x.font="400 26px Rubik, sans-serif";x.fillStyle="#6b6b6b";x.fillText("Итог: кезек реті · "+new Date().toLocaleDateString("ru-RU"),W/2,180);
+  x.strokeStyle="#dcdcdc";x.setLineDash([10,8]);x.lineWidth=3;x.beginPath();x.moveTo(100,215);x.lineTo(W-100,215);x.stroke();x.setLineDash([]);
+  list.forEach((r,i)=>{const y=260+i*rowH+rowH/2;
+    x.fillStyle=r.c;x.beginPath();x.arc(140,y,30,0,7);x.fill();
+    x.fillStyle="#fff";x.font="800 30px Rubik, sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText(r.n,140,y+1);
+    x.fillStyle="#141414";x.textAlign="left";x.font="700 34px Rubik, sans-serif";x.fillText(r.name,195,y);
+    x.fillStyle="#6b6b6b";x.textAlign="right";x.font="400 26px Rubik, sans-serif";x.fillText(r.st,W-110,y);
+    x.strokeStyle="#e6e6e6";x.lineWidth=2;x.beginPath();x.moveTo(100,y+rowH/2);x.lineTo(W-100,y+rowH/2);x.stroke();
+  });
+  x.textBaseline="alphabetic";x.save();x.translate(W/2,H-75);x.rotate(-.08);x.strokeStyle="#e8262b";x.lineWidth=4;x.strokeRect(-170,-32,340,56);
+  x.fillStyle="#e8262b";x.font="800 30px Rubik, sans-serif";x.textAlign="center";x.fillText("БӘРІ ТАҢДАДЫ ✓",0,6);x.restore();
+  return new Promise(r=>c.toBlob(r,"image/png"));
+}
+$("#dl").addEventListener("click",async()=>{
+  try{const b=await makePng();const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="belyi-kassa-itog.png";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
+  catch(e){show("Скачать болмады — скриншот жасап ал.")}
+});
+
+async function poll(){
+  try{
+    const r=await fetch(API+"/json?poll=1&since=all");const t=await r.text();
+    t.split("\n").forEach(l=>{if(!l.trim())return;try{const m=JSON.parse(l);if(m.event==="message"&&typeof m.message==="string"&&m.message.startsWith("spun:")){const id=m.message.slice(5);if(ORDER[id])spun.add(id)}}catch(e){}});
+    syncPicks();show("");
+  }catch(e){if(!loaded)show("Деректер жүктелмеді — интернетті тексер.")}
+  loaded=true;
+  if(!spinning){renderAll();if(!me&&!allDone())view("pick")}
+}
+renderAll();view(allDone()?"done":"pick");
+poll();setInterval(()=>{if(!document.hidden)poll()},5000);
+}
