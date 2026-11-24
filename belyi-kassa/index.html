@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="kk">
+<html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -59,146 +59,197 @@ h2{font-size:22px;margin:0 0 14px;text-align:center}
 .msg{background:#fff3cd;border-radius:10px;padding:10px 12px;font-size:14px;margin-top:12px;display:none}
 .msg.on{display:block}
 [hidden]{display:none!important}
+.field{display:block;width:100%;font:inherit;font-size:24px;font-weight:700;letter-spacing:1px;text-align:center;padding:14px;border:2px solid var(--ink);border-radius:14px;background:#fff;color:var(--ink)}
+.field:focus{outline:3px solid var(--c4);outline-offset:2px}
+.err{color:var(--red);text-align:center;font-size:15px;min-height:22px;margin:8px 0 0}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;padding:16px;z-index:10}
+.modal .box{background:#fff;color:var(--ink);border-radius:18px;padding:22px;width:min(100%,340px)}
+.modal h3{margin:0 0 12px;text-align:center;font-size:20px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row2 .btn{margin-top:14px}
+.btn.ghost{background:#ececec;color:var(--ink);box-shadow:0 4px 0 #cfcfcf}
 @media (prefers-reduced-motion:reduce){#wheel{transition-duration:.01s}}
 </style>
 </head>
 <body>
 <main class="receipt">
   <h1>Белый касса</h1>
-  <p class="sub">Кезек карусельі · <span id="date"></span></p>
+  <p class="sub">Карусель очереди · <span id="date"></span></p>
   <hr class="dash">
 
   <section id="vPick">
-    <h2>Атыңды таңда</h2>
+    <h2>Выбери своё имя</h2>
     <div class="names" id="names"></div>
-    <p class="note">Әр адам бір рет қана айналдырады. Шыққан сан — сенің кезегің.</p>
+    <p class="note">Каждый крутит только один раз. Выпавшее число — твоя очередь.</p>
+  </section>
+
+  <section id="vAuth" hidden>
+    <h2>Вход: <span id="authName"></span></h2>
+    <p class="note" style="margin:0 0 14px">Введи свой номер телефона</p>
+    <form id="authForm" novalidate>
+      <input class="field" id="phone" type="tel" inputmode="numeric" autocomplete="tel" value="+7 ">
+      <p class="err" id="authErr" aria-live="polite"></p>
+      <button class="btn" type="submit">Войти</button>
+    </form>
+    <button class="link" id="authBack">← Выбрать другое имя</button>
   </section>
 
   <section id="vSpin" hidden>
-    <p class="hello">Сәлем, <b id="who"></b>! Карусельді айналдыр 👇</p>
+    <p class="hello">Привет, <b id="who"></b>! Крути карусель 👇</p>
     <div class="wheelbox"><div class="pin"></div><svg viewBox="0 0 200 200" aria-label="Карусель"><g id="wheel"></g><circle cx="100" cy="100" r="16" fill="#141414"/><circle cx="100" cy="100" r="6" fill="#fff"/></svg></div>
     <div class="result" id="result" aria-live="polite"></div>
-    <button class="btn" id="spin">Айналдыру</button>
-    <button class="link" id="back">← Басқа атты таңдау</button>
+    <button class="btn" id="spin">Крутить</button>
+    <button class="link" id="back">← Выбрать другое имя</button>
   </section>
 
   <section id="vDone" hidden>
-    <h2>Итог: кезек реті</h2>
+    <h2>Итог: порядок очереди</h2>
     <ul class="rows" id="final"></ul>
-    <span class="stamp">БӘРІ ТАҢДАДЫ ✓</span>
-    <button class="btn dark" id="dl">Итогты скачать (сурет)</button>
+    <span class="stamp">ВСЕ ВЫБРАЛИ ✓</span>
+    <button class="btn dark" id="dl">Скачать итог (картинка)</button>
   </section>
 
   <hr class="dash">
   <section id="vBoard">
-    <h2 style="font-size:18px">Қазіргі жағдай</h2>
+    <h2 style="font-size:18px">Текущее состояние</h2>
     <ul class="rows" id="board"></ul>
   </section>
   <div class="msg" id="msg"></div>
+  <button class="link" id="reset">Сбросить всё</button>
 </main>
+
+<div class="modal" id="modal" hidden>
+  <form class="box" id="resetForm" novalidate>
+    <h3>Сброс</h3>
+    <p class="note" style="margin:0 0 12px">Введи код, чтобы сбросить все результаты</p>
+    <input class="field" id="code" type="password" inputmode="numeric" autocomplete="off" maxlength="8">
+    <p class="err" id="codeErr" aria-live="polite"></p>
+    <div class="row2"><button class="btn ghost" type="button" id="cancel">Отмена</button><button class="btn" type="submit">Сбросить</button></div>
+  </form>
+</div>
 
 <script>
 {
 const PEOPLE=[
   {id:"maksadbek",name:"Максадбек",done:true},
   {id:"elaman",name:"Еламан",done:true},
-  {id:"kuanysh",name:"Қуаныш"},
+  {id:"kuanysh",name:"Куаныш"},
   {id:"dias",name:"Диас"},
-  {id:"adilet",name:"Әділет"},
+  {id:"adilet",name:"Адилет"},
   {id:"alisher",name:"Алишер"}
 ];
 const ACTIVE=PEOPLE.filter(p=>!p.done);
-const N=ACTIVE.length; // 4 кезек
+const N=ACTIVE.length;
 const COLORS=["var(--c1)","var(--c2)","var(--c3)","var(--c4)"];
 const HEX=["#ff4b3e","#ffb800","#18b26b","#1f6bff"];
+const SALT="bk-b6916567";
+const H={
+  dias:"a20fd8542fb128a3aa5f0261deab9f2d1043f886201c1dc7d86ed61df738c8fe",
+  kuanysh:"5820f8a7ced4830c1dda730f99b942e80bd385918ea6298c243ecb00d7e2a90b",
+  adilet:"75085a2748dd5205300fb09dbce9ee3e0b121015f4efd9a45c7473d5060e3cd1",
+  alisher:"03b0598f19e633256f652c9edb53595d7b2ad9287ea56414f7a1108721d03136",
+  reset:"ddf5b6377d4658d8d30e9318aa8c101d1a3d28f863fcd03158f5e8ee2e100962"
+};
+const SEED="374dd137424bb8e6";
+const API="https://ntfy.sh/belyi-kassa-fcdbc1996e351651";
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const ORDER=JSON.parse(atob("==QfzAiOiIXZoNXasFmIgwSMgojI0VGbpRWYiACLyAiOiMXYpRmIgwCNgojIoNXeuFWdrJye".split("").reverse().join("")));
-const TOPIC="belyi-kassa-cd6ff94b1c6b6fcf",API="https://ntfy.sh/"+TOPIC;
-let spun=new Set(), picks={}, me=null, rot=0, spinning=false, loaded=false;
-try{JSON.parse(localStorage.getItem("bk-spun")||"[]").forEach(id=>spun.add(id))}catch(e){}
-function syncPicks(){picks={};spun.forEach(id=>{if(ORDER[id])picks[id]=ORDER[id]});try{localStorage.setItem("bk-spun",JSON.stringify([...spun]))}catch(e){}}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+async function sha(t){
+  if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+  throw new Error("nocrypto");
+}
+// порядок для каждой "эпохи" (после каждого сброса — новый)
+function orderFor(epoch){
+  let h=2166136261;for(const c of SEED+":"+epoch){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}
+  let a=h>>>0;const rnd=()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+  const nums=Array.from({length:N},(_,i)=>i+1);
+  for(let i=nums.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[nums[i],nums[j]]=[nums[j],nums[i]]}
+  const o={};ACTIVE.forEach((p,i)=>o[p.id]=nums[i]);return o;
+}
+
+let epoch=0, ORDER=orderFor(0), spun=new Set(), picks={}, me=null, authed=new Set(), rot=0, spinning=false, loaded=false;
+try{const st=JSON.parse(localStorage.getItem("bk-state")||"null");if(st){epoch=st.e|0;ORDER=orderFor(epoch);(st.s||[]).forEach(id=>spun.add(id))}}catch(e){}
+function syncPicks(){picks={};spun.forEach(id=>{if(ORDER[id])picks[id]=ORDER[id]});try{localStorage.setItem("bk-state",JSON.stringify({e:epoch,s:[...spun]}))}catch(e){}}
 syncPicks();
 
 $("#date").textContent=new Date().toLocaleDateString("ru-RU");
-
 function nameOf(id){return (PEOPLE.find(p=>p.id===id)||{}).name||""}
 function ownerOf(n){return Object.keys(picks).find(k=>picks[k]===n)}
 function allDone(){return ACTIVE.every(p=>picks[p.id])}
-function show(msg){const m=$("#msg");m.textContent=msg||"";m.classList.toggle("on",!!msg)}
+function show(m){const e=$("#msg");e.textContent=m||"";e.classList.toggle("on",!!m)}
 
 function renderNames(){
   $("#names").innerHTML=PEOPLE.map(p=>{
-    if(p.done) return `<button class="nm" disabled>${esc(p.name)}<small>✓ жасап қойды</small></button>`;
+    if(p.done) return `<button class="nm" disabled>${esc(p.name)}<small>✓ уже сделал</small></button>`;
     const n=picks[p.id];
-    if(n) return `<button class="nm took" data-id="${p.id}">${esc(p.name)}<small>Кезегі: ${n}</small></button>`;
-    return `<button class="nm" data-id="${p.id}" ${loaded?"":"disabled"}>${esc(p.name)}<small>${loaded?"таңдау":"жүктелуде…"}</small></button>`;
+    if(n) return `<button class="nm took" data-id="${p.id}">${esc(p.name)}<small>Очередь: ${n}</small></button>`;
+    return `<button class="nm" data-id="${p.id}" ${loaded?"":"disabled"}>${esc(p.name)}<small>${loaded?"выбрать":"загрузка…"}</small></button>`;
   }).join("");
 }
-
 function seg(i){
   const a0=(i*360/N-90)*Math.PI/180,a1=((i+1)*360/N-90)*Math.PI/180,r=96;
   const x0=100+r*Math.cos(a0),y0=100+r*Math.sin(a0),x1=100+r*Math.cos(a1),y1=100+r*Math.sin(a1);
-  const am=((i+.5)*360/N-90)*Math.PI/180;
-  const tx=100+58*Math.cos(am),ty=100+58*Math.sin(am);
-  const nx=100+80*Math.cos(am),ny=100+80*Math.sin(am);
+  const am=((i+.5)*360/N-90)*Math.PI/180,tx=100+58*Math.cos(am),ty=100+58*Math.sin(am),nx=100+80*Math.cos(am),ny=100+80*Math.sin(am);
   const n=i+1,o=ownerOf(n),deg=(i+.5)*360/N;
-  const fill=o?"#d6d6d6":COLORS[i];
-  return `<path d="M100 100L${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z" fill="${fill}" stroke="#fff" stroke-width="3"/>
+  return `<path d="M100 100L${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z" fill="${o?"#d6d6d6":COLORS[i]}" stroke="#fff" stroke-width="3"/>
   <text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" font-size="34" font-weight="800" fill="${o?"#9a9a9a":"#fff"}" text-anchor="middle" dominant-baseline="central" transform="rotate(${deg} ${tx.toFixed(1)} ${ty.toFixed(1)})">${n}</text>
   ${o?`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="10" font-weight="700" fill="#555" text-anchor="middle" dominant-baseline="central" transform="rotate(${deg} ${nx.toFixed(1)} ${ny.toFixed(1)})">${esc(nameOf(o))}</text>`:""}`;
 }
-function renderWheel(){
-  $("#wheel").innerHTML=`<circle cx="100" cy="100" r="99" fill="#141414"/>`+Array.from({length:N},(_,i)=>seg(i)).join("");
-}
-
+function renderWheel(){$("#wheel").innerHTML=`<circle cx="100" cy="100" r="99" fill="#141414"/>`+Array.from({length:N},(_,i)=>seg(i)).join("")}
 function renderBoard(){
   const rows=[
-    ...PEOPLE.filter(p=>p.done).map(p=>`<li class="done"><span class="no">✓</span><span class="who">${esc(p.name)}</span><span class="st">жасап қойды</span></li>`),
+    ...PEOPLE.filter(p=>p.done).map(p=>`<li class="done"><span class="no">✓</span><span class="who">${esc(p.name)}</span><span class="st">уже сделал</span></li>`),
     ...Array.from({length:N},(_,i)=>{const n=i+1,o=ownerOf(n);
-      return o?`<li><span class="no" style="background:${COLORS[i]}">${n}</span><span class="who">${esc(nameOf(o))}</span><span class="st">${n}-кезек</span></li>`
-             :`<li class="wait"><span class="no">${n}</span><span class="who" style="color:#aaa">— бос —</span><span class="st">күтуде</span></li>`})
+      return o?`<li><span class="no" style="background:${COLORS[i]}">${n}</span><span class="who">${esc(nameOf(o))}</span><span class="st">${n}-я очередь</span></li>`
+             :`<li class="wait"><span class="no">${n}</span><span class="who" style="color:#aaa">— свободно —</span><span class="st">ждёт</span></li>`})
   ].join("");
-  $("#board").innerHTML=rows;
-  $("#final").innerHTML=rows;
+  $("#board").innerHTML=rows;$("#final").innerHTML=rows;
 }
-
 function view(v){
-  $("#vPick").hidden=v!=="pick";$("#vSpin").hidden=v!=="spin";$("#vDone").hidden=v!=="done";
+  for(const k of ["Pick","Auth","Spin","Done"])$("#v"+k).hidden=v!==k.toLowerCase();
   $("#vBoard").hidden=v==="done";
 }
-
 function renderSpinState(){
-  if(!me)return;
-  const n=picks[me];
+  if(!me)return;const n=picks[me];
   $("#spin").disabled=!!n||spinning;
-  $("#spin").textContent=n?"Сен айналдырып қойдың":"Айналдыру";
-  if(n&&!spinning) $("#result").innerHTML=`<div class="big">${n}</div><p><b>${esc(nameOf(me))}</b>, сенің кезегің — <b>${n}</b></p>`;
-  else if(!spinning) $("#result").innerHTML="";
+  $("#spin").textContent=n?"Ты уже крутил":"Крутить";
+  if(n&&!spinning)$("#result").innerHTML=`<div class="big">${n}</div><p><b>${esc(nameOf(me))}</b>, твоя очередь — <b>${n}</b></p>`;
+  else if(!spinning)$("#result").innerHTML="";
 }
+function renderAll(){renderNames();renderBoard();if(!spinning)renderWheel();renderSpinState();if(allDone()&&!spinning)view("done")}
 
-function renderAll(){
-  renderNames();renderBoard();
-  if(!spinning) renderWheel();
-  renderSpinState();
-  if(allDone()&&!spinning) view("done");
+function openSpin(){
+  $("#who").textContent=nameOf(me);view("spin");renderWheel();renderSpinState();
+  const w=$("#wheel");w.style.transition="none";rot=picks[me]?-((picks[me]-.5)*360/N):0;w.style.transform=`rotate(${rot}deg)`;
 }
-
 $("#names").addEventListener("click",e=>{
   const b=e.target.closest("button[data-id]");if(!b)return;
-  me=b.dataset.id;$("#who").textContent=nameOf(me);
-  show("");view("spin");renderWheel();renderSpinState();
-  if(picks[me]){rot=0;$("#wheel").style.transition="none";$("#wheel").style.transform=`rotate(${-((picks[me]-.5)*360/N)}deg)`;}
-  else{$("#wheel").style.transform=`rotate(${rot}deg)`}
+  me=b.dataset.id;show("");
+  if(picks[me]||authed.has(me)){openSpin();return}
+  $("#authName").textContent=nameOf(me);$("#phone").value="+7 ";$("#authErr").textContent="";view("auth");
+  setTimeout(()=>{const p=$("#phone");p.focus();p.setSelectionRange(p.value.length,p.value.length)},50);
 });
+
+// маска номера: +7 XXX XXX XXXX
+function fmt(d){d=d.slice(0,10);let o="+7 ";if(d.length>0)o+=d.slice(0,3);if(d.length>3)o+=" "+d.slice(3,6);if(d.length>6)o+=" "+d.slice(6,10);return o}
+$("#phone").addEventListener("input",e=>{let d=e.target.value.replace(/\D/g,"");if(d.startsWith("7")||d.startsWith("8"))d=d.slice(1);e.target.value=fmt(d);$("#authErr").textContent=""});
+$("#phone").addEventListener("keydown",e=>{const p=e.target;if((e.key==="Backspace")&&p.value.length<=3)e.preventDefault()});
+$("#authForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const d=$("#phone").value.replace(/\D/g,"").slice(1);
+  if(d.length!==10){$("#authErr").textContent="Введи номер полностью: +7 XXX XXX XXXX";return}
+  let ok=false;try{ok=(await sha(SALT+":"+d))===H[me]}catch(x){$("#authErr").textContent="Открой ссылку в обычном браузере (Safari/Chrome).";return}
+  if(!ok){$("#authErr").textContent="Неверный номер для "+nameOf(me);return}
+  authed.add(me);openSpin();
+});
+$("#authBack").addEventListener("click",()=>{me=null;view(allDone()?"done":"pick")});
 $("#back").addEventListener("click",()=>{if(spinning)return;me=null;view(allDone()?"done":"pick")});
 
-function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
-
 $("#spin").addEventListener("click",async()=>{
-  if(!me||picks[me]||spinning)return;
-  spinning=true;$("#spin").disabled=true;$("#spin").textContent="Айналып жатыр…";$("#result").innerHTML="";show("");
-  try{await fetch(API,{method:"POST",body:"spun:"+me})}catch(e){show("Интернет әлсіз — нәтиже тек осы телефонда сақталды.")}
+  if(!me||picks[me]||spinning||!authed.has(me))return;
+  spinning=true;$("#spin").disabled=true;$("#spin").textContent="Крутится…";$("#result").innerHTML="";show("");
+  try{await fetch(API,{method:"POST",body:"spun:"+me+":"+epoch})}catch(e){show("Слабый интернет — результат сохранён только на этом телефоне.")}
   const n=ORDER[me],center=(n-.5)*360/N,jit=(Math.random()-.5)*(360/N)*.6;
   rot=Math.ceil(rot/360)*360+360*6-center+jit;
   const w=$("#wheel");w.style.transition="";void w.getBoundingClientRect();w.style.transform=`rotate(${rot}deg)`;
@@ -208,17 +259,28 @@ $("#spin").addEventListener("click",async()=>{
   if(allDone()){await sleep(2200);if(!spinning)view("done")}
 });
 
-// ---- download PNG ----
+// сброс
+$("#reset").addEventListener("click",()=>{$("#code").value="";$("#codeErr").textContent="";$("#modal").hidden=false;setTimeout(()=>$("#code").focus(),50)});
+$("#cancel").addEventListener("click",()=>{$("#modal").hidden=true});
+$("#resetForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  let ok=false;try{ok=(await sha(SALT+":"+$("#code").value.trim()))===H.reset}catch(x){}
+  if(!ok){$("#codeErr").textContent="Неверный код";return}
+  try{const r=await fetch(API,{method:"POST",body:"reset:"+(epoch+1)});if(!r.ok)throw 0}catch(x){$("#codeErr").textContent="Нет интернета — сброс не выполнен";return}
+  epoch++;ORDER=orderFor(epoch);spun=new Set();authed=new Set();syncPicks();me=null;
+  $("#modal").hidden=true;renderAll();view("pick");show("Всё сброшено ✓");
+});
+
+// картинка итога
 async function makePng(){
-  const W=900,rowH=86,list=[...PEOPLE.filter(p=>p.done).map(p=>({n:"✓",name:p.name,st:"жасап қойды",c:"#bdbdbd"})),
-    ...Array.from({length:N},(_,i)=>({n:String(i+1),name:nameOf(ownerOf(i+1))||"—",st:(i+1)+"-кезек",c:HEX[i]}))];
-  const H=260+list.length*rowH+120;
-  const c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  const W=900,rowH=86,list=[...PEOPLE.filter(p=>p.done).map(p=>({n:"✓",name:p.name,st:"уже сделал",c:"#bdbdbd"})),
+    ...Array.from({length:N},(_,i)=>({n:String(i+1),name:nameOf(ownerOf(i+1))||"—",st:(i+1)+"-я очередь",c:HEX[i]}))];
+  const Ht=260+list.length*rowH+120;
+  const c=document.createElement("canvas");c.width=W;c.height=Ht;const x=c.getContext("2d");
   try{await document.fonts.ready}catch(e){}
-  x.fillStyle="#1f3df0";x.fillRect(0,0,W,H);
-  x.fillStyle="#fff";x.fillRect(60,30,W-120,H-60);
+  x.fillStyle="#1f3df0";x.fillRect(0,0,W,Ht);x.fillStyle="#fff";x.fillRect(60,30,W-120,Ht-60);
   x.fillStyle="#141414";x.textAlign="center";x.font="800 64px Rubik, sans-serif";x.fillText("Белый касса",W/2,130);
-  x.font="400 26px Rubik, sans-serif";x.fillStyle="#6b6b6b";x.fillText("Итог: кезек реті · "+new Date().toLocaleDateString("ru-RU"),W/2,180);
+  x.font="400 26px Rubik, sans-serif";x.fillStyle="#6b6b6b";x.fillText("Итог: порядок очереди · "+new Date().toLocaleDateString("ru-RU"),W/2,180);
   x.strokeStyle="#dcdcdc";x.setLineDash([10,8]);x.lineWidth=3;x.beginPath();x.moveTo(100,215);x.lineTo(W-100,215);x.stroke();x.setLineDash([]);
   list.forEach((r,i)=>{const y=260+i*rowH+rowH/2;
     x.fillStyle=r.c;x.beginPath();x.arc(140,y,30,0,7);x.fill();
@@ -227,23 +289,30 @@ async function makePng(){
     x.fillStyle="#6b6b6b";x.textAlign="right";x.font="400 26px Rubik, sans-serif";x.fillText(r.st,W-110,y);
     x.strokeStyle="#e6e6e6";x.lineWidth=2;x.beginPath();x.moveTo(100,y+rowH/2);x.lineTo(W-100,y+rowH/2);x.stroke();
   });
-  x.textBaseline="alphabetic";x.save();x.translate(W/2,H-75);x.rotate(-.08);x.strokeStyle="#e8262b";x.lineWidth=4;x.strokeRect(-170,-32,340,56);
-  x.fillStyle="#e8262b";x.font="800 30px Rubik, sans-serif";x.textAlign="center";x.fillText("БӘРІ ТАҢДАДЫ ✓",0,6);x.restore();
+  x.textBaseline="alphabetic";x.save();x.translate(W/2,Ht-75);x.rotate(-.08);x.strokeStyle="#e8262b";x.lineWidth=4;x.strokeRect(-170,-32,340,56);
+  x.fillStyle="#e8262b";x.font="800 30px Rubik, sans-serif";x.textAlign="center";x.fillText("ВСЕ ВЫБРАЛИ ✓",0,6);x.restore();
   return new Promise(r=>c.toBlob(r,"image/png"));
 }
 $("#dl").addEventListener("click",async()=>{
   try{const b=await makePng();const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="belyi-kassa-itog.png";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
-  catch(e){show("Скачать болмады — скриншот жасап ал.")}
+  catch(e){show("Не удалось скачать — сделай скриншот.")}
 });
 
+// синхронизация
 async function poll(){
   try{
     const r=await fetch(API+"/json?poll=1&since=all");const t=await r.text();
-    t.split("\n").forEach(l=>{if(!l.trim())return;try{const m=JSON.parse(l);if(m.event==="message"&&typeof m.message==="string"&&m.message.startsWith("spun:")){const id=m.message.slice(5);if(ORDER[id])spun.add(id)}}catch(e){}});
-    syncPicks();show("");
-  }catch(e){if(!loaded)show("Деректер жүктелмеді — интернетті тексер.")}
+    let e=0,s=new Set(),any=false;
+    t.split("\n").forEach(l=>{if(!l.trim())return;try{const m=JSON.parse(l);if(m.event!=="message"||typeof m.message!=="string")return;
+      const p=m.message.split(":");
+      if(p[0]==="reset"){any=true;e=Math.max(e,parseInt(p[1])||e+1);s=new Set()}
+      else if(p[0]==="spun"&&ACTIVE.some(a=>a.id===p[1])){any=true;if((parseInt(p[2])||0)===e)s.add(p[1])}
+    }catch(x){}});
+    if(any){if(e!==epoch){epoch=e;ORDER=orderFor(e);authed=new Set();if(!spinning){me=null;view("pick")}}spun=s;if(me&&!picks[me]&&spinning)spun.delete(me);syncPicks()}
+    if(!spinning)show("");
+  }catch(x){if(!loaded)show("Данные не загрузились — проверь интернет.")}
   loaded=true;
-  if(!spinning){renderAll();if(!me&&!allDone())view("pick")}
+  if(!spinning){renderAll();if(!me&&!allDone()&&$("#vDone").hidden===false)view("pick")}
 }
 renderAll();view(allDone()?"done":"pick");
 poll();setInterval(()=>{if(!document.hidden)poll()},5000);
