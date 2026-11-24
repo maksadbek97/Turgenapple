@@ -156,7 +156,7 @@ h2{font:700 22px/1.2 Unbounded,Manrope,sans-serif;margin:10px 0 4px;letter-spaci
     <section class="card" id="vPick">
       <span class="eyebrow">Шаг 1 из 4</span>
       <h2>Выбери своё имя</h2>
-      <p class="lead">Каждый крутит один раз. Число — очередь и месяц: 3 декабрь · 4 январь · 5 февраль · 6 март.</p>
+      <p class="lead">Каждый крутит один раз. Число — очередь и месяц: 3 ноябрь · 4 декабрь · 5 январь · 6 февраль.</p>
       <div class="names" id="names"></div>
     </section>
 
@@ -203,7 +203,7 @@ h2{font:700 22px/1.2 Unbounded,Manrope,sans-serif;margin:10px 0 4px;letter-spaci
       <div id="dayBox" class="sec" hidden>
         <span class="eyebrow">Шаг 4 из 4 · Дата</span>
         <h2>В какой день делаешь?</h2>
-        <div class="mhead"><b id="monthName"></b><span>Зачёркнутые дни недоступны</span></div>
+        <div class="mhead"><b id="monthName"></b><span>Зачёркнутые — недоступны</span></div>
         <div class="cal" id="cal"></div>
         <p class="err" id="dayErr" aria-live="polite"></p>
         <button class="btn" id="dayOk" disabled>Выбери день</button>
@@ -264,11 +264,12 @@ const NUMS=[3,4,5,6];
 const N=NUMS.length;
 // очередь → месяц
 const MONTHS={
-  3:{y:2026,m:11,name:"Декабрь",gen:"декабря",skip:[30,31]},
-  4:{y:2027,m:0,name:"Январь",gen:"января",skip:[1,2]},
-  5:{y:2027,m:1,name:"Февраль",gen:"февраля",skip:[]},
-  6:{y:2027,m:2,name:"Март",gen:"марта",skip:[]}
+  3:{y:2026,m:10,name:"Ноябрь",gen:"ноября",skip:[]},
+  4:{y:2026,m:11,name:"Декабрь",gen:"декабря",skip:[30,31]},
+  5:{y:2027,m:0,name:"Январь",gen:"января",skip:[1,2]},
+  6:{y:2027,m:1,name:"Февраль",gen:"февраля",skip:[]}
 };
+const TODAY=(()=>{const t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate())})();
 const WD=["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"];
 const COLORS=["linear-gradient(145deg,#ff8a7d,#e8453a)","linear-gradient(145deg,#ffd76a,#f29d0b)","linear-gradient(145deg,#4fe0c4,#0f9b83)","linear-gradient(145deg,#7aaaff,#2f62e0)"];
 const AV={maksadbek:"linear-gradient(145deg,#a3b1ab,#7d8c86)",elaman:"linear-gradient(145deg,#a3b1ab,#7d8c86)",kuanysh:"linear-gradient(145deg,#8b7bff,#5b45e0)",dias:"linear-gradient(145deg,#ff9a6b,#f0603a)",adilet:"linear-gradient(145deg,#43d6b0,#0f9b83)",alisher:"linear-gradient(145deg,#5aa7ff,#2f62e0)"};
@@ -284,7 +285,7 @@ const H={
   reset:"ddf5b6377d4658d8d30e9318aa8c101d1a3d28f863fcd03158f5e8ee2e100962"
 };
 const SEED="374dd137424bb8e6";
-const API="https://ntfy.sh/belyi-kassa-512600b4a55028b2";
+const API="https://ntfy.sh/belyi-kassa-2d2525c26f6501c6";
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -375,7 +376,7 @@ function renderCal(){
   const first=(new Date(M.y,M.m,1).getDay()+6)%7,len=new Date(M.y,M.m+1,0).getDate();
   let h=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].map(d=>`<span class="wd">${d}</span>`).join("");
   for(let i=0;i<first;i++)h+="<span></span>";
-  for(let d=1;d<=len;d++){const wd=new Date(M.y,M.m,d).getDay();h+=`<button type="button" data-d="${d}" class="${wd===0||wd===6?"we":""}" ${M.skip.includes(d)?"disabled":""}>${d}</button>`}
+  for(let d=1;d<=len;d++){const wd=new Date(M.y,M.m,d).getDay();h+=`<button type="button" data-d="${d}" class="${wd===0||wd===6?"we":""}" ${(M.skip.includes(d)||new Date(M.y,M.m,d)<TODAY)?"disabled":""}>${d}</button>`}
   $("#cal").innerHTML=h;$("#cal").dataset.for=me;
   $("#dayOk").disabled=true;$("#dayOk").textContent="Выбери день";$("#dayErr").textContent="";
 }
