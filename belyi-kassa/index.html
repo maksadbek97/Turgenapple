@@ -66,6 +66,16 @@ h2{font-size:22px;margin:0 0 14px;text-align:center}
 .modal .box{background:#fff;color:var(--ink);border-radius:18px;padding:22px;width:min(100%,340px)}
 .modal h3{margin:0 0 12px;text-align:center;font-size:20px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row2 .btn{margin-top:14px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:10px}
+.cal .wd{font-size:12px;color:var(--mute);text-align:center;padding-bottom:2px}
+.cal button{font:inherit;font-weight:700;font-size:16px;min-height:44px;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer;padding:0}
+.cal button:disabled{color:#c8c8c8;background:#f5f5f5;text-decoration:line-through;cursor:not-allowed}
+.cal button.sel{background:var(--ink);border-color:var(--ink);color:#fff}
+.cal button:focus-visible{outline:3px solid var(--c4);outline-offset:2px}
+.month{text-align:center;font-weight:800;font-size:22px;margin:4px 0 0}
+.card{display:block;width:100%;border-radius:14px;margin-top:6px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.btn.wa{background:#25d366;box-shadow:0 4px 0 #128c4a}
+.btn.wa:active{box-shadow:0 1px 0 #128c4a}
 .btn.ghost{background:#ececec;color:var(--ink);box-shadow:0 4px 0 #cfcfcf}
 @media (prefers-reduced-motion:reduce){#wheel{transition-duration:.01s}}
 </style>
@@ -79,7 +89,7 @@ h2{font-size:22px;margin:0 0 14px;text-align:center}
   <section id="vPick">
     <h2>Выбери своё имя</h2>
     <div class="names" id="names"></div>
-    <p class="note">Каждый крутит только один раз. Выпавшее число — твоя очередь.</p>
+    <p class="note">Каждый крутит один раз. Выпавшее число — твоя очередь и месяц: 3 — декабрь, 4 — январь, 5 — февраль, 6 — март.</p>
   </section>
 
   <section id="vAuth" hidden>
@@ -98,6 +108,20 @@ h2{font-size:22px;margin:0 0 14px;text-align:center}
     <div class="wheelbox"><div class="pin"></div><svg viewBox="0 0 200 200" aria-label="Карусель"><g id="wheel"></g><circle cx="100" cy="100" r="16" fill="#141414"/><circle cx="100" cy="100" r="6" fill="#fff"/></svg></div>
     <div class="result" id="result" aria-live="polite"></div>
     <button class="btn" id="spin">Крутить</button>
+    <div id="dayBox" hidden>
+      <hr class="dash">
+      <h2>В какой день делаешь?</h2>
+      <p class="month" id="monthName"></p>
+      <div class="cal" id="cal"></div>
+      <p class="err" id="dayErr" aria-live="polite"></p>
+      <button class="btn" id="dayOk" disabled>Выбери день</button>
+    </div>
+    <div id="cardBox" hidden>
+      <hr class="dash">
+      <img class="card" id="cardImg" alt="Карточка с очередью и датой">
+      <button class="btn wa" id="share">Поделиться в WhatsApp</button>
+      <button class="link" id="saveCard">Скачать картинку</button>
+    </div>
     <button class="link" id="back">← Выбрать другое имя</button>
   </section>
 
@@ -130,15 +154,24 @@ h2{font-size:22px;margin:0 0 14px;text-align:center}
 <script>
 {
 const PEOPLE=[
-  {id:"maksadbek",name:"Максадбек",done:true},
-  {id:"elaman",name:"Еламан",done:true},
-  {id:"kuanysh",name:"Куаныш"},
-  {id:"dias",name:"Диас"},
-  {id:"adilet",name:"Адилет"},
-  {id:"alisher",name:"Алишер"}
+  {id:"maksadbek",name:"Максадбек",done:true,no:1},
+  {id:"elaman",name:"Еламан",done:true,no:2},
+  {id:"kuanysh",name:"Куаныш",tail:"96"},
+  {id:"dias",name:"Диас",tail:"11"},
+  {id:"adilet",name:"Адилет",tail:"58"},
+  {id:"alisher",name:"Алишер",tail:"19"}
 ];
 const ACTIVE=PEOPLE.filter(p=>!p.done);
-const N=ACTIVE.length;
+const NUMS=[3,4,5,6];
+const N=NUMS.length;
+// очередь → месяц
+const MONTHS={
+  3:{y:2026,m:11,name:"Декабрь",gen:"декабря",skip:[30,31]},
+  4:{y:2027,m:0,name:"Январь",gen:"января",skip:[1,2]},
+  5:{y:2027,m:1,name:"Февраль",gen:"февраля",skip:[]},
+  6:{y:2027,m:2,name:"Март",gen:"марта",skip:[]}
+};
+const WD=["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"];
 const COLORS=["var(--c1)","var(--c2)","var(--c3)","var(--c4)"];
 const HEX=["#ff4b3e","#ffb800","#18b26b","#1f6bff"];
 const SALT="bk-b6916567";
@@ -150,97 +183,129 @@ const H={
   reset:"ddf5b6377d4658d8d30e9318aa8c101d1a3d28f863fcd03158f5e8ee2e100962"
 };
 const SEED="374dd137424bb8e6";
-const API="https://ntfy.sh/belyi-kassa-fcdbc1996e351651";
+const API="https://ntfy.sh/belyi-kassa-512600b4a55028b2";
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const idx=n=>NUMS.indexOf(n);
 
 async function sha(t){
   if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
   throw new Error("nocrypto");
 }
-// порядок для каждой "эпохи" (после каждого сброса — новый)
 function orderFor(epoch){
   let h=2166136261;for(const c of SEED+":"+epoch){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}
   let a=h>>>0;const rnd=()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
-  const nums=Array.from({length:N},(_,i)=>i+1);
+  const nums=NUMS.slice();
   for(let i=nums.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[nums[i],nums[j]]=[nums[j],nums[i]]}
   const o={};ACTIVE.forEach((p,i)=>o[p.id]=nums[i]);return o;
 }
+function dateText(n,d){const M=MONTHS[n];const w=new Date(M.y,M.m,d).getDay();return `${d} ${M.gen} (${WD[w]})`}
 
-let epoch=0, ORDER=orderFor(0), spun=new Set(), picks={}, me=null, authed=new Set(), rot=0, spinning=false, loaded=false;
-try{const st=JSON.parse(localStorage.getItem("bk-state")||"null");if(st){epoch=st.e|0;ORDER=orderFor(epoch);(st.s||[]).forEach(id=>spun.add(id))}}catch(e){}
-function syncPicks(){picks={};spun.forEach(id=>{if(ORDER[id])picks[id]=ORDER[id]});try{localStorage.setItem("bk-state",JSON.stringify({e:epoch,s:[...spun]}))}catch(e){}}
+let epoch=0, ORDER=orderFor(0), spun=new Set(), days={}, picks={}, me=null, authed=new Set(), rot=0, spinning=false, loaded=false, selDay=0, cardBlob=null;
+try{const st=JSON.parse(localStorage.getItem("bk-state2")||"null");if(st){epoch=st.e|0;ORDER=orderFor(epoch);(st.s||[]).forEach(id=>spun.add(id));days=st.d||{}}}catch(e){}
+function syncPicks(){picks={};spun.forEach(id=>{if(ORDER[id])picks[id]=ORDER[id]});try{localStorage.setItem("bk-state2",JSON.stringify({e:epoch,s:[...spun],d:days}))}catch(e){}}
 syncPicks();
 
 $("#date").textContent=new Date().toLocaleDateString("ru-RU");
-function nameOf(id){return (PEOPLE.find(p=>p.id===id)||{}).name||""}
+function person(id){return PEOPLE.find(p=>p.id===id)||{}}
+function nameOf(id){return person(id).name||""}
 function ownerOf(n){return Object.keys(picks).find(k=>picks[k]===n)}
-function allDone(){return ACTIVE.every(p=>picks[p.id])}
+function allDone(){return ACTIVE.every(p=>picks[p.id]&&days[p.id])}
 function show(m){const e=$("#msg");e.textContent=m||"";e.classList.toggle("on",!!m)}
 
 function renderNames(){
   $("#names").innerHTML=PEOPLE.map(p=>{
     if(p.done) return `<button class="nm" disabled>${esc(p.name)}<small>✓ уже сделал</small></button>`;
     const n=picks[p.id];
-    if(n) return `<button class="nm took" data-id="${p.id}">${esc(p.name)}<small>Очередь: ${n}</small></button>`;
+    if(n) return `<button class="nm took" data-id="${p.id}">${esc(p.name)}<small>${days[p.id]?n+" · "+days[p.id]+" "+MONTHS[n].gen:"Очередь: "+n+" · день не выбран"}</small></button>`;
     return `<button class="nm" data-id="${p.id}" ${loaded?"":"disabled"}>${esc(p.name)}<small>${loaded?"выбрать":"загрузка…"}</small></button>`;
   }).join("");
 }
 function seg(i){
   const a0=(i*360/N-90)*Math.PI/180,a1=((i+1)*360/N-90)*Math.PI/180,r=96;
   const x0=100+r*Math.cos(a0),y0=100+r*Math.sin(a0),x1=100+r*Math.cos(a1),y1=100+r*Math.sin(a1);
-  const am=((i+.5)*360/N-90)*Math.PI/180,tx=100+58*Math.cos(am),ty=100+58*Math.sin(am),nx=100+80*Math.cos(am),ny=100+80*Math.sin(am);
-  const n=i+1,o=ownerOf(n),deg=(i+.5)*360/N;
+  const am=((i+.5)*360/N-90)*Math.PI/180,tx=100+56*Math.cos(am),ty=100+56*Math.sin(am),nx=100+81*Math.cos(am),ny=100+81*Math.sin(am);
+  const n=NUMS[i],o=ownerOf(n),deg=(i+.5)*360/N;
   return `<path d="M100 100L${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z" fill="${o?"#d6d6d6":COLORS[i]}" stroke="#fff" stroke-width="3"/>
   <text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" font-size="34" font-weight="800" fill="${o?"#9a9a9a":"#fff"}" text-anchor="middle" dominant-baseline="central" transform="rotate(${deg} ${tx.toFixed(1)} ${ty.toFixed(1)})">${n}</text>
-  ${o?`<text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="10" font-weight="700" fill="#555" text-anchor="middle" dominant-baseline="central" transform="rotate(${deg} ${nx.toFixed(1)} ${ny.toFixed(1)})">${esc(nameOf(o))}</text>`:""}`;
+  <text x="${nx.toFixed(1)}" y="${ny.toFixed(1)}" font-size="9" font-weight="700" fill="${o?"#555":"rgba(255,255,255,.9)"}" text-anchor="middle" dominant-baseline="central" transform="rotate(${deg} ${nx.toFixed(1)} ${ny.toFixed(1)})">${o?esc(nameOf(o)):MONTHS[n].name}</text>`;
 }
 function renderWheel(){$("#wheel").innerHTML=`<circle cx="100" cy="100" r="99" fill="#141414"/>`+Array.from({length:N},(_,i)=>seg(i)).join("")}
-function renderBoard(){
-  const rows=[
-    ...PEOPLE.filter(p=>p.done).map(p=>`<li class="done"><span class="no">✓</span><span class="who">${esc(p.name)}</span><span class="st">уже сделал</span></li>`),
-    ...Array.from({length:N},(_,i)=>{const n=i+1,o=ownerOf(n);
-      return o?`<li><span class="no" style="background:${COLORS[i]}">${n}</span><span class="who">${esc(nameOf(o))}</span><span class="st">${n}-я очередь</span></li>`
-             :`<li class="wait"><span class="no">${n}</span><span class="who" style="color:#aaa">— свободно —</span><span class="st">ждёт</span></li>`})
+function rowsHtml(){
+  return [
+    ...PEOPLE.filter(p=>p.done).map(p=>`<li class="done"><span class="no">${p.no}</span><span class="who">${esc(p.name)}</span><span class="st">уже сделал ✓</span></li>`),
+    ...NUMS.map((n,i)=>{const o=ownerOf(n);
+      return o?`<li><span class="no" style="background:${COLORS[i]}">${n}</span><span class="who">${esc(nameOf(o))}</span><span class="st">${days[o]?days[o]+" "+MONTHS[n].gen:MONTHS[n].name+" · день?"}</span></li>`
+             :`<li class="wait"><span class="no">${n}</span><span class="who" style="color:#aaa">— свободно —</span><span class="st">${MONTHS[n].name}</span></li>`})
   ].join("");
-  $("#board").innerHTML=rows;$("#final").innerHTML=rows;
 }
+function renderBoard(){const r=rowsHtml();$("#board").innerHTML=r;$("#final").innerHTML=r}
 function view(v){
   for(const k of ["Pick","Auth","Spin","Done"])$("#v"+k).hidden=v!==k.toLowerCase();
   $("#vBoard").hidden=v==="done";
 }
+
 function renderSpinState(){
   if(!me)return;const n=picks[me];
-  $("#spin").disabled=!!n||spinning;
-  $("#spin").textContent=n?"Ты уже крутил":"Крутить";
-  if(n&&!spinning)$("#result").innerHTML=`<div class="big">${n}</div><p><b>${esc(nameOf(me))}</b>, твоя очередь — <b>${n}</b></p>`;
+  $("#spin").hidden=!!n&&!spinning;
+  $("#spin").disabled=spinning;
+  $("#spin").textContent=spinning?"Крутится…":"Крутить";
+  if(n&&!spinning)$("#result").innerHTML=`<div class="big">${n}</div><p><b>${esc(nameOf(me))}</b>, твоя очередь — <b>${n}</b>, месяц — <b>${MONTHS[n].name}</b></p>`;
   else if(!spinning)$("#result").innerHTML="";
+  const needDay=!!n&&!days[me]&&!spinning;
+  $("#dayBox").hidden=!needDay;
+  if(needDay&&!$("#cal").dataset.for)renderCal();
+  $("#cardBox").hidden=!(n&&days[me]&&!spinning);
+  if(n&&days[me]&&!spinning&&$("#cardImg").dataset.key!==me+n+days[me])buildCard();
 }
-function renderAll(){renderNames();renderBoard();if(!spinning)renderWheel();renderSpinState();if(allDone()&&!spinning)view("done")}
+function renderAll(){renderNames();renderBoard();if(!spinning)renderWheel();renderSpinState();if(allDone()&&!spinning&&!me)view("done")}
+
+function renderCal(){
+  const n=picks[me],M=MONTHS[n];selDay=0;
+  $("#monthName").textContent=M.name+" "+M.y;
+  const first=(new Date(M.y,M.m,1).getDay()+6)%7,len=new Date(M.y,M.m+1,0).getDate();
+  let h=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].map(d=>`<span class="wd">${d}</span>`).join("");
+  for(let i=0;i<first;i++)h+="<span></span>";
+  for(let d=1;d<=len;d++)h+=`<button type="button" data-d="${d}" ${M.skip.includes(d)?"disabled":""}>${d}</button>`;
+  $("#cal").innerHTML=h;$("#cal").dataset.for=me;
+  $("#dayOk").disabled=true;$("#dayOk").textContent="Выбери день";$("#dayErr").textContent="";
+}
+$("#cal").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-d]");if(!b||b.disabled)return;
+  $("#cal").querySelectorAll(".sel").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");
+  selDay=+b.dataset.d;$("#dayOk").disabled=false;$("#dayOk").textContent="Делаю "+dateText(picks[me],selDay);
+});
+$("#dayOk").addEventListener("click",async()=>{
+  if(!selDay||!me||!picks[me])return;
+  $("#dayOk").disabled=true;
+  try{const r=await fetch(API,{method:"POST",body:"day:"+me+":"+epoch+":"+selDay});if(!r.ok)throw 0}
+  catch(x){$("#dayErr").textContent="Нет интернета — попробуй ещё раз";$("#dayOk").disabled=false;return}
+  days[me]=selDay;syncPicks();renderNames();renderBoard();renderSpinState();
+  setTimeout(()=>$("#cardBox").scrollIntoView({behavior:"smooth",block:"start"}),150);
+});
 
 function openSpin(){
-  $("#who").textContent=nameOf(me);view("spin");renderWheel();renderSpinState();
-  const w=$("#wheel");w.style.transition="none";rot=picks[me]?-((picks[me]-.5)*360/N):0;w.style.transform=`rotate(${rot}deg)`;
+  $("#who").textContent=nameOf(me);$("#cal").dataset.for="";view("spin");renderWheel();renderSpinState();
+  const w=$("#wheel");w.style.transition="none";rot=picks[me]?-((idx(picks[me])+.5)*360/N):0;w.style.transform=`rotate(${rot}deg)`;
 }
 $("#names").addEventListener("click",e=>{
   const b=e.target.closest("button[data-id]");if(!b)return;
   me=b.dataset.id;show("");
-  if(picks[me]||authed.has(me)){openSpin();return}
+  if((picks[me]&&days[me])||authed.has(me)){openSpin();return}
   $("#authName").textContent=nameOf(me);$("#phone").value="+7 ";$("#authErr").textContent="";view("auth");
   setTimeout(()=>{const p=$("#phone");p.focus();p.setSelectionRange(p.value.length,p.value.length)},50);
 });
 
-// маска номера: +7 XXX XXX XXXX
 function fmt(d){d=d.slice(0,10);let o="+7 ";if(d.length>0)o+=d.slice(0,3);if(d.length>3)o+=" "+d.slice(3,6);if(d.length>6)o+=" "+d.slice(6,10);return o}
 $("#phone").addEventListener("input",e=>{let d=e.target.value.replace(/\D/g,"");if(d.startsWith("7")||d.startsWith("8"))d=d.slice(1);e.target.value=fmt(d);$("#authErr").textContent=""});
-$("#phone").addEventListener("keydown",e=>{const p=e.target;if((e.key==="Backspace")&&p.value.length<=3)e.preventDefault()});
+$("#phone").addEventListener("keydown",e=>{if(e.key==="Backspace"&&e.target.value.length<=3)e.preventDefault()});
 $("#authForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const d=$("#phone").value.replace(/\D/g,"").slice(1);
-  if(d.length!==10){$("#authErr").textContent="Введи номер полностью: +7 XXX XXX XXXX";return}
+  if(d.length!==10){$("#authErr").textContent="Введи номер полностью: +7 XXX XXX XX XX";return}
   let ok=false;try{ok=(await sha(SALT+":"+d))===H[me]}catch(x){$("#authErr").textContent="Открой ссылку в обычном браузере (Safari/Chrome).";return}
-  if(!ok){$("#authErr").textContent="Неверный номер для "+nameOf(me);return}
+  if(!ok){$("#authErr").textContent=`Неверный номер. Ваш номер заканчивается на ${person(me).tail} — введите этот номер.`;return}
   authed.add(me);openSpin();
 });
 $("#authBack").addEventListener("click",()=>{me=null;view(allDone()?"done":"pick")});
@@ -248,16 +313,57 @@ $("#back").addEventListener("click",()=>{if(spinning)return;me=null;view(allDone
 
 $("#spin").addEventListener("click",async()=>{
   if(!me||picks[me]||spinning||!authed.has(me))return;
-  spinning=true;$("#spin").disabled=true;$("#spin").textContent="Крутится…";$("#result").innerHTML="";show("");
+  spinning=true;renderSpinState();$("#result").innerHTML="";show("");
   try{await fetch(API,{method:"POST",body:"spun:"+me+":"+epoch})}catch(e){show("Слабый интернет — результат сохранён только на этом телефоне.")}
-  const n=ORDER[me],center=(n-.5)*360/N,jit=(Math.random()-.5)*(360/N)*.6;
+  const n=ORDER[me],center=(idx(n)+.5)*360/N,jit=(Math.random()-.5)*(360/N)*.6;
   rot=Math.ceil(rot/360)*360+360*6-center+jit;
   const w=$("#wheel");w.style.transition="";void w.getBoundingClientRect();w.style.transform=`rotate(${rot}deg)`;
   await sleep(matchMedia("(prefers-reduced-motion:reduce)").matches?100:4800);
-  spun.add(me);syncPicks();spinning=false;
+  spun.add(me);syncPicks();spinning=false;$("#cal").dataset.for="";
   renderNames();renderBoard();renderWheel();renderSpinState();
-  if(allDone()){await sleep(2200);if(!spinning)view("done")}
+  setTimeout(()=>$("#dayBox").scrollIntoView({behavior:"smooth",block:"start"}),300);
 });
+
+// карточка для WhatsApp
+function canvasRows(x,W,y0,list,rowH){
+  list.forEach((r,i)=>{const y=y0+i*rowH+rowH/2;
+    x.fillStyle=r.c;x.beginPath();x.arc(140,y,30,0,7);x.fill();
+    x.fillStyle="#fff";x.font="800 30px Rubik, sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText(r.n,140,y+1);
+    x.fillStyle="#141414";x.textAlign="left";x.font="700 34px Rubik, sans-serif";x.fillText(r.name,195,y);
+    x.fillStyle="#6b6b6b";x.textAlign="right";x.font="400 26px Rubik, sans-serif";x.fillText(r.st,W-110,y);
+    x.strokeStyle="#e6e6e6";x.lineWidth=2;x.beginPath();x.moveTo(100,y+rowH/2);x.lineTo(W-100,y+rowH/2);x.stroke();
+  });x.textBaseline="alphabetic";
+}
+async function buildCard(){
+  const n=picks[me],d=days[me],nm=nameOf(me),i=idx(n);
+  const W=1080,Hh=1080,c=document.createElement("canvas");c.width=W;c.height=Hh;const x=c.getContext("2d");
+  try{await document.fonts.ready}catch(e){}
+  x.fillStyle="#1f3df0";x.fillRect(0,0,W,Hh);
+  x.fillStyle="#fff";x.fillRect(90,70,W-180,Hh-140);
+  x.fillStyle="#141414";x.textAlign="center";x.font="800 76px Rubik, sans-serif";x.fillText("Белый касса",W/2,190);
+  x.strokeStyle="#dcdcdc";x.setLineDash([12,10]);x.lineWidth=4;x.beginPath();x.moveTo(150,240);x.lineTo(W-150,240);x.stroke();x.setLineDash([]);
+  x.font="700 58px Rubik, sans-serif";x.fillText(nm,W/2,330);
+  x.font="400 34px Rubik, sans-serif";x.fillStyle="#6b6b6b";x.fillText("выпала очередь",W/2,385);
+  x.fillStyle=HEX[i];x.beginPath();x.arc(W/2,510,100,0,7);x.fill();
+  x.fillStyle="#fff";x.font="800 130px Rubik, sans-serif";x.textBaseline="middle";x.fillText(String(n),W/2,518);x.textBaseline="alphabetic";
+  x.fillStyle="#141414";x.font="800 72px Rubik, sans-serif";x.fillText(d+" "+MONTHS[n].gen,W/2,720);
+  x.font="400 36px Rubik, sans-serif";x.fillStyle="#6b6b6b";x.fillText(WD[new Date(MONTHS[n].y,MONTHS[n].m,d).getDay()]+", делаю белую кассу",W/2,780);
+  x.save();x.translate(W/2,890);x.rotate(-.05);x.strokeStyle="#e8262b";x.lineWidth=5;x.strokeRect(-290,-48,580,84);
+  x.fillStyle="#e8262b";x.font="800 42px Rubik, sans-serif";x.fillText("ЖДУ ВСЕХ! 🎉",0,10);x.restore();
+  cardBlob=await new Promise(r=>c.toBlob(r,"image/png"));
+  const img=$("#cardImg");if(img.src)URL.revokeObjectURL(img.src);img.src=URL.createObjectURL(cardBlob);img.dataset.key=me+n+d;
+}
+function shareText(){const n=picks[me];return `${nameOf(me)}: выпала очередь ${n}. Делаю белую кассу ${dateText(n,days[me])}. Жду всех!`}
+function saveBlob(b,name){const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
+$("#share").addEventListener("click",()=>{
+  if(!cardBlob)return;
+  const file=new File([cardBlob],"belyi-kassa.png",{type:"image/png"});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    navigator.share({files:[file],text:shareText()}).catch(e=>{if(e&&e.name!=="AbortError")fallback()});
+  }else fallback();
+  function fallback(){saveBlob(cardBlob,"belyi-kassa.png");show("Картинка скачана — прикрепи её в WhatsApp.");setTimeout(()=>{location.href="https://wa.me/?text="+encodeURIComponent(shareText())},600)}
+});
+$("#saveCard").addEventListener("click",()=>{if(cardBlob)saveBlob(cardBlob,"belyi-kassa.png")});
 
 // сброс
 $("#reset").addEventListener("click",()=>{$("#code").value="";$("#codeErr").textContent="";$("#modal").hidden=false;setTimeout(()=>$("#code").focus(),50)});
@@ -267,52 +373,53 @@ $("#resetForm").addEventListener("submit",async e=>{
   let ok=false;try{ok=(await sha(SALT+":"+$("#code").value.trim()))===H.reset}catch(x){}
   if(!ok){$("#codeErr").textContent="Неверный код";return}
   try{const r=await fetch(API,{method:"POST",body:"reset:"+(epoch+1)});if(!r.ok)throw 0}catch(x){$("#codeErr").textContent="Нет интернета — сброс не выполнен";return}
-  epoch++;ORDER=orderFor(epoch);spun=new Set();authed=new Set();syncPicks();me=null;
+  epoch++;ORDER=orderFor(epoch);spun=new Set();days={};authed=new Set();syncPicks();me=null;
   $("#modal").hidden=true;renderAll();view("pick");show("Всё сброшено ✓");
 });
 
-// картинка итога
-async function makePng(){
-  const W=900,rowH=86,list=[...PEOPLE.filter(p=>p.done).map(p=>({n:"✓",name:p.name,st:"уже сделал",c:"#bdbdbd"})),
-    ...Array.from({length:N},(_,i)=>({n:String(i+1),name:nameOf(ownerOf(i+1))||"—",st:(i+1)+"-я очередь",c:HEX[i]}))];
-  const Ht=260+list.length*rowH+120;
-  const c=document.createElement("canvas");c.width=W;c.height=Ht;const x=c.getContext("2d");
-  try{await document.fonts.ready}catch(e){}
-  x.fillStyle="#1f3df0";x.fillRect(0,0,W,Ht);x.fillStyle="#fff";x.fillRect(60,30,W-120,Ht-60);
-  x.fillStyle="#141414";x.textAlign="center";x.font="800 64px Rubik, sans-serif";x.fillText("Белый касса",W/2,130);
-  x.font="400 26px Rubik, sans-serif";x.fillStyle="#6b6b6b";x.fillText("Итог: порядок очереди · "+new Date().toLocaleDateString("ru-RU"),W/2,180);
-  x.strokeStyle="#dcdcdc";x.setLineDash([10,8]);x.lineWidth=3;x.beginPath();x.moveTo(100,215);x.lineTo(W-100,215);x.stroke();x.setLineDash([]);
-  list.forEach((r,i)=>{const y=260+i*rowH+rowH/2;
-    x.fillStyle=r.c;x.beginPath();x.arc(140,y,30,0,7);x.fill();
-    x.fillStyle="#fff";x.font="800 30px Rubik, sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText(r.n,140,y+1);
-    x.fillStyle="#141414";x.textAlign="left";x.font="700 34px Rubik, sans-serif";x.fillText(r.name,195,y);
-    x.fillStyle="#6b6b6b";x.textAlign="right";x.font="400 26px Rubik, sans-serif";x.fillText(r.st,W-110,y);
-    x.strokeStyle="#e6e6e6";x.lineWidth=2;x.beginPath();x.moveTo(100,y+rowH/2);x.lineTo(W-100,y+rowH/2);x.stroke();
-  });
-  x.textBaseline="alphabetic";x.save();x.translate(W/2,Ht-75);x.rotate(-.08);x.strokeStyle="#e8262b";x.lineWidth=4;x.strokeRect(-170,-32,340,56);
-  x.fillStyle="#e8262b";x.font="800 30px Rubik, sans-serif";x.textAlign="center";x.fillText("ВСЕ ВЫБРАЛИ ✓",0,6);x.restore();
-  return new Promise(r=>c.toBlob(r,"image/png"));
-}
+// итог картинкой
 $("#dl").addEventListener("click",async()=>{
-  try{const b=await makePng();const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="belyi-kassa-itog.png";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
-  catch(e){show("Не удалось скачать — сделай скриншот.")}
+  try{
+    const W=900,rowH=86,list=[...PEOPLE.filter(p=>p.done).map(p=>({n:String(p.no),name:p.name,st:"уже сделал ✓",c:"#bdbdbd"})),
+      ...NUMS.map((n,i)=>{const o=ownerOf(n);return {n:String(n),name:nameOf(o)||"—",st:o&&days[o]?days[o]+" "+MONTHS[n].gen:MONTHS[n].name,c:HEX[i]}})];
+    const Ht=260+list.length*rowH+120,c=document.createElement("canvas");c.width=W;c.height=Ht;const x=c.getContext("2d");
+    try{await document.fonts.ready}catch(e){}
+    x.fillStyle="#1f3df0";x.fillRect(0,0,W,Ht);x.fillStyle="#fff";x.fillRect(60,30,W-120,Ht-60);
+    x.fillStyle="#141414";x.textAlign="center";x.font="800 64px Rubik, sans-serif";x.fillText("Белый касса",W/2,130);
+    x.font="400 26px Rubik, sans-serif";x.fillStyle="#6b6b6b";x.fillText("Итог: порядок очереди",W/2,180);
+    x.strokeStyle="#dcdcdc";x.setLineDash([10,8]);x.lineWidth=3;x.beginPath();x.moveTo(100,215);x.lineTo(W-100,215);x.stroke();x.setLineDash([]);
+    canvasRows(x,W,260,list,rowH);
+    x.save();x.translate(W/2,Ht-75);x.rotate(-.08);x.strokeStyle="#e8262b";x.lineWidth=4;x.strokeRect(-170,-32,340,56);
+    x.fillStyle="#e8262b";x.font="800 30px Rubik, sans-serif";x.textAlign="center";x.fillText("ВСЕ ВЫБРАЛИ ✓",0,6);x.restore();
+    const b=await new Promise(r=>c.toBlob(r,"image/png"));saveBlob(b,"belyi-kassa-itog.png");
+  }catch(e){show("Не удалось скачать — сделай скриншот.")}
 });
 
 // синхронизация
 async function poll(){
   try{
     const r=await fetch(API+"/json?poll=1&since=all");const t=await r.text();
-    let e=0,s=new Set(),any=false;
+    let e=0,s=new Set(),dd={},any=false;
     t.split("\n").forEach(l=>{if(!l.trim())return;try{const m=JSON.parse(l);if(m.event!=="message"||typeof m.message!=="string")return;
       const p=m.message.split(":");
-      if(p[0]==="reset"){any=true;e=Math.max(e,parseInt(p[1])||e+1);s=new Set()}
+      if(p[0]==="reset"){any=true;e=Math.max(e,parseInt(p[1])||e+1);s=new Set();dd={}}
       else if(p[0]==="spun"&&ACTIVE.some(a=>a.id===p[1])){any=true;if((parseInt(p[2])||0)===e)s.add(p[1])}
+      else if(p[0]==="day"&&ACTIVE.some(a=>a.id===p[1])){any=true;const d=parseInt(p[3]);if((parseInt(p[2])||0)===e&&d>=1&&d<=31&&!dd[p[1]])dd[p[1]]=d}
     }catch(x){}});
-    if(any){if(e!==epoch){epoch=e;ORDER=orderFor(e);authed=new Set();if(!spinning){me=null;view("pick")}}spun=s;if(me&&!picks[me]&&spinning)spun.delete(me);syncPicks()}
+    if(any){
+      if(e!==epoch){epoch=e;ORDER=orderFor(e);authed=new Set();days={};if(!spinning){me=null;view("pick")}}
+      spun=s;if(me&&spinning)spun.delete(me);
+      for(const k in days)if(!dd[k]&&s.has(k))dd[k]=days[k];
+      days=dd;syncPicks();
+    }
     if(!spinning)show("");
   }catch(x){if(!loaded)show("Данные не загрузились — проверь интернет.")}
-  loaded=true;
-  if(!spinning){renderAll();if(!me&&!allDone()&&$("#vDone").hidden===false)view("pick")}
+  const first=!loaded;loaded=true;
+  if(!spinning){
+    if(me)renderNames(),renderBoard(),renderWheel(),renderSpinState();else renderAll();
+    if(!me&&!allDone()&&!$("#vDone").hidden)view("pick");
+    if(first&&!me)view(allDone()?"done":"pick");
+  }
 }
 renderAll();view(allDone()?"done":"pick");
 poll();setInterval(()=>{if(!document.hidden)poll()},5000);
